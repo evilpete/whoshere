@@ -1,0 +1,9 @@
+
+[DEFAULT]
+http_port = 8088
+
+[whoshere]
+log_dir = /var/tmp/whoshere
+stat_file = /var/www/whoshere-status
+time_away = 660
+target_file = mtargets.json

@@ -1,0 +1,19 @@
+[Unit]
+Description=Whoshere Daemon
+After=syslog.target network-online.target
+
+[Service]
+User=root
+Group=root
+
+PIDFile=/var/run/whoshere.pid
+
+Type=simple
+ExecStart=/usr/local/bin/whoshere -r
+TimeoutStopSec=10
+RestartSec=5s
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

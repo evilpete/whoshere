@@ -1,0 +1,192 @@
+<HTML>
+<HEAD>
+<TITLE>Mac Status</TITLE>
+<style>
+th { text-align: center; }
+td, th {
+    vertical-align: inherit;
+    padding: 3px 8px 3px 8px;
+    border: 1px solid #444444;
+}
+// table#tb_0 {
+//     margin-left:auto;
+//     margin-right:auto;
+// }
+table {
+    border-collapse: collapse;
+    vertical-align: inherit;
+    border-spacing: 0px;
+    border: 2px solid #444444;
+    align: center;
+}
+body {
+    background-color: black;
+    color: white;
+}
+// a:link, a:visited { color: #9999CC; }
+</style>
+</HEAD>
+
+<BODY OnLoad=do_all()>
+
+<script src="cur-status.json"></script>
+
+<div class=report ID=report NAME=report>--Loading--</div>
+
+<SCRIPT LANGUAGE="JavaScript">
+
+    var report_obj = null
+    var jdata_status = null
+
+    function do_all() {
+        jdata_status=jdata[0]
+        jdata.splice(0,1)
+        do_report()
+    }
+
+    //
+    // Sorting Funtions
+    //
+
+    var sort_by = function(field, reverse, primer){
+        var key = primer ?
+            function(x) {return primer(x[field])} :
+            function(x) {return x[field]};
+
+        reverse = !reverse ? 1 : -1;
+
+        return function (a, b) {
+            return a = key(a), b = key(b), reverse * ((a > b) - (b > a));
+        }
+    }
+
+    function lc(s) { return s.toString().toLowerCase() }
+
+    sort_mac_rev=true
+    function sort_mac() {
+        jdata.sort(sort_by('mac', sort_mac_rev, lc));
+        if (sort_mac_rev) { sort_mac_rev = false } else { sort_mac_rev = true }
+        do_report()
+    }
+
+    sort_stat_rev=true
+    function sort_stat() {
+        jdata.sort(sort_by('stat', sort_stat_rev, parseInt));
+        if (sort_stat_rev) { sort_stat_rev = false } else { sort_stat_rev = true }
+        do_report()
+    }
+
+    sort_name_rev=false
+    function sort_name() {
+        // console.log('#sort_name ' + sort_name_rev);
+        jdata.sort(sort_by('name', sort_name_rev, lc));
+        if (sort_name_rev) { sort_name_rev = false } else { sort_name_rev = true }
+        do_report()
+    }
+
+    sort_seen_rev = true
+    function sort_seen() {
+        jdata.sort(sort_by('last_seen', sort_seen_rev, parseInt));
+        if (sort_seen_rev) { sort_seen_rev = false } else { sort_seen_rev = true }
+        do_report()
+    }
+
+    sort_change_rev=true
+    function sort_change() {
+        jdata.sort(sort_by('last_change', sort_change_rev, parseInt));
+        if (sort_change_rev) { sort_change_rev = false } else { sort_change_rev = true }
+        do_report()
+    }
+
+    //
+    // Report Table Generation
+    //
+
+    function do_report() {
+
+        if ( ! report_obj ) {
+            report_obj = document.getElementById("report")
+        }
+
+        htmlrep = "<TABLE NAME='tb_0' ID='tb_0'>"
+                + "<TR><TH id=datastr colspan='5'>" + jdata_status.time_str + "</TH></TR>"
+                + "<TR title='Click Sort'>"
+                + "<TD OnClick='Javascript:sort_mac();'>MAC</TD>"
+                + "<TD OnClick='Javascript:sort_stat();'>&nbsp;</TD>"
+                + "<TD OnClick='Javascript:sort_name();'>Name</TD>"
+                + "<TD OnClick='Javascript:sort_seen();'>Last Seen</TD>"
+                + "<TD OnClick='Javascript:sort_change();'>Last Change</TD>"
+                + "</TR>"
+
+        itemc=0
+        dtime = Date.now() / 1000
+        for (pp in jdata) {
+
+            if ( jdata[pp].name == "status" ) continue;
+
+            scolor="white"
+            mcolor="white"
+            ncolor="white"
+            ccolor="white"
+
+            if (jdata[pp].stat == "1") {
+                mcolor="#44FF44"
+            } else if (jdata[pp].stat == "-1") {
+                mcolor="gray"
+            }
+
+            if ( Number(jdata[pp].last_seen) < 1200) {
+                last_seen_str = "&nbsp;"
+		ccolor="gray"
+            } else {
+                last_seen_str = jdata[pp].last_seen_str
+            }
+
+            if ( Number(jdata[pp].last_change) == 0) {
+                last_change_str = "&nbsp;"
+            } else {
+                last_change_str = jdata[pp].last_change_str
+            }
+
+            if (jdata[pp].stat == "0" && (dtime - Number(jdata[pp].last_change)) < 1200) {
+                ncolor="yellow"
+            }
+
+            if ( (dtime - Number(jdata[pp].last_change)) < 1200) {
+                ccolor="orange"
+            }
+
+            htmlrep += "<TR>"
+                    + "<TD id=mac" + itemc + ">"
+                        + "<font color='" + mcolor + "'>"
+                        + jdata[pp].mac
+                        + "</font></TD>"
+                    + "<TD id=stat" + itemc + ">"
+                        + jdata[pp].stat
+                        + "</TD>"
+                    + "<TD id=name" + itemc + ">"
+                        + "<font color='" + ncolor + "'>"
+                        + jdata[pp].name
+                        + "</font></TD>"
+                    + "<TD id=lseen" + itemc + ">"
+                        + "<font color='" + scolor + "'>"
+                        + last_seen_str
+                        + "</font></TD>"
+                    + "<TD id=lchange" + itemc + ">"
+                        + "<font color='" + ccolor + "'>"
+                        + last_change_str
+                        + "</font></TD>"
+                + "</TR>"
+
+            itemc += 1
+        }
+        htmlrep += "</TABLE>"
+
+        report_obj.innerHTML=  htmlrep
+    }
+
+</script>
+
+<P></P>
+</BODY>
+</HTML>
