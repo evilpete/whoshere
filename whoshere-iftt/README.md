@@ -20,7 +20,7 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
 - Click `+this`
 
-        ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_this.png)
+    ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_this.png)
 
     - For `Choose a service` search for `webhooks`
 
