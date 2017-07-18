@@ -174,6 +174,8 @@ uploaded targets and config files have precedence over local files, this behavio
 
 Note: [ISYlib](https://github.com/evilpete/ISYlib-python) is required
 
+See also: [ISY Discussion Group](http://forum.universal-devices.com/topic/22106-whoshere/)
+
 
 -------
 
