@@ -16,22 +16,25 @@ Sends a web request to notify IFTT of an status change event
 
 On IFTT's "[My Applets](https://ifttt.com/my_applets)" page click "New Applet"
 
-on
 On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
-Click `+this`
+- Click `+this`
 
-For `Choose a service` search for `webhooks`
+  ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_this.png)
 
-Click on `Webhooks`
+- For `Choose a service` search for `webhooks`
 
-Click `Receive a web request`
+  ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_service.png)
 
-Enter `whoshere` under `Event Name`
+- Click on `Webhooks`
 
-Click `Create Trigger`
+- Click `Receive a web request`
 
-Click "+that"
+- Enter `whoshere` under `Event Name`
+
+- Click `Create Trigger`
+
+- Click "+that"
 
 For `Choose action service` pick what you want to happen ( send sms, send a 'tweet', send 'email', etc )
 
