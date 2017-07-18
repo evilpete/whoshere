@@ -24,13 +24,15 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
     - For `Choose a service` search for `webhooks`
 
-    ![service](/whoshere-iftt/.screen_shots/Screen_Shot_service.png)
+        ![service](/whoshere-iftt/.screen_shots/Screen_Shot_service.png)
 
     - Click on `Webhooks`
 
     - Click `Receive a web request`
 
     - Enter `whoshere` under `Event Name`
+
+    This will be the `IFTT_EVENT` used in [whoshere-iftt](/whoshere-iftt/whoshere-iftt.py)
 
     - Click `Create Trigger`
 
