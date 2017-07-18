@@ -41,17 +41,14 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
     For `Choose action service` pick what you want to happen ( send sms, send a 'tweet', send 'email', etc )
 
 
-    for a messaged you can include a `ingredient`, Value1 is the
-
-    for example :
-
-    ![message](/whoshere-iftt/.screen_shots/Screen_Shot_message.png)
-
-
+    for a messaged you can include a `ingredient`, where 
     `value1` is the target name
     `value2` is the target current valuse 
     `value3` is the new value
 
+    for example :
+
+    ![message](/whoshere-iftt/.screen_shots/Screen_Shot_message.png)
 
     - Click `Create action`
 
