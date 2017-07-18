@@ -20,21 +20,19 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
 - Click `+this`
 
-  ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_this.png)
+    ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_this.png)
 
-- For `Choose a service` search for `webhooks`
+    - For `Choose a service` search for `webhooks`
 
-  ![service](/whoshere-iftt/.screen_shots/Screen_Shot_service.png)
+    ![service](/whoshere-iftt/.screen_shots/Screen_Shot_service.png)
 
-- Click on `Webhooks`
+    - Click on `Webhooks`
 
-- Click `Receive a web request`
+    - Click `Receive a web request`
 
-- Enter `whoshere` under `Event Name`
+    - Enter `whoshere` under `Event Name`
 
-- Click `Create Trigger`
-
-![+that](/whoshere-iftt/.screen_shots/Screen_Shot_that.png)
+    - Click `Create Trigger`
 
 - Click "+that"
 
@@ -42,7 +40,6 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
 For `Choose action service` pick what you want to happen ( send sms, send a 'tweet', send 'email', etc )
 
-        ![+that](/whoshere-iftt/.screen_shots/Screen_Shot_that.png)
 
 for a messaged you can include a `ingredient`, Value1 is the
 
