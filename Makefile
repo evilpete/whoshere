@@ -22,6 +22,9 @@ PYTHON=/usr/local/bin/python
 # TS := $(shell /bin/date '+v0.1.%Y%m%d.%H')
 TS := $(shell /bin/date '+v0.1.%Y%m%d')
 
+#GPGKEY=0x3C8BD58EED4DB66C
+GPGKEY=0xA6E9A31506067FC8
+
 all: syntax lint
 
 syntax:
@@ -31,6 +34,9 @@ syntax:
 
 style: pep8 lint
 
+tag-sign:
+	@echo  "tag =" ${TS}
+	git tag -f -s -u ${GPGKEY} ${TS}
 
 tag:
 	@echo  "tag =" ${TS}
