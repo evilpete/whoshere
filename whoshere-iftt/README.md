@@ -52,7 +52,7 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
         for example :
 
-            ![message](/whoshere-iftt/.screen_shots/Screen_Shot_message.png)
+        ![message](/whoshere-iftt/.screen_shots/Screen_Shot_message.png)
 
     - Click `Create action`
 
