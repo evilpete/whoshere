@@ -182,5 +182,3 @@ Note: [ISYlib](https://github.com/evilpete/ISYlib-python) is required
 * Some type of automated or assisted setup for mtargets file
 
 -------
-
-## How do I get set up? ##
