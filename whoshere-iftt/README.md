@@ -20,7 +20,7 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
 - Click `+this`
 
-    ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_this.png)
+        ![+this](/whoshere-iftt/.screen_shots/Screen_Shot_this.png)
 
     - For `Choose a service` search for `webhooks`
 
@@ -40,17 +40,19 @@ On IFTT's "[Applets create](https://ifttt.com/create)" page click "New Applet"
 
     ![+that](/whoshere-iftt/.screen_shots/Screen_Shot_that.png)
 
-    For `Choose action service` pick what you want to happen ( send sms, send a 'tweet', send 'email', etc )
+    - Choose action service
+
+        For `Choose action service` pick what you want to happen ( send sms, send a 'tweet', send 'email', etc )
 
 
-    for a messaged you can include a `ingredient`, where 
-    `value1` is the target name
-    `value2` is the target current valuse 
-    `value3` is the new value
+        for a messaged you can include a `ingredient`, where 
+        `value1` is the target name
+        `value2` is the target current valuse 
+        `value3` is the new value
 
-    for example :
+        for example :
 
-    ![message](/whoshere-iftt/.screen_shots/Screen_Shot_message.png)
+            ![message](/whoshere-iftt/.screen_shots/Screen_Shot_message.png)
 
     - Click `Create action`
 
