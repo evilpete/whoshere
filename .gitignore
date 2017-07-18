@@ -1,6 +1,7 @@
 *.py[cod]
 
 whoshere-main.py
+.pylintrc
 isylib.cfg
 .isylib.cfg
 mtargets.json

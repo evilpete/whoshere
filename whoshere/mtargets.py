@@ -13,7 +13,6 @@ __all__ = ['Mtargets']
 #TIME_FMT = "%Y-%m-%d %H:%M:%S"
 
 class Mtargets(object):
-    # pylint: disable=too-many-instance-attributes
     _verbose = 0
 
     def __init__(self, **kargs):
@@ -173,8 +172,7 @@ class Mtargets(object):
 #
 if __name__ == "__main__":
     import __main__
-    print(__main__.__file__)
+    print __main__.__file__
 
-    print("syntax ok")
+    print "syntax ok"
     exit(0)
-

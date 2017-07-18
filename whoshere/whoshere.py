@@ -30,7 +30,7 @@ import traceback
 import argparse
 import json
 import logging
-import socket
+# import socket
 # import StringIO
 import io
 from ConfigParser import SafeConfigParser as ConfigParser
@@ -180,7 +180,7 @@ class ArpMon(object):
         while True:
             # tcpdump -i em0 -v -v ether src 60:be:b5:ad:28:2d
             try:
-                sniff(prn=self.pcap_callback, iface=self.iface,
+                sniff(prn=self._pcap_callback, iface=self.iface,
                       filter=pcap_filter, store=0,
                       timeout=self.sniff_timeout)
             except select.error, se:
@@ -208,7 +208,7 @@ class ArpMon(object):
 
         return
 
-    def pcap_callback(self, pkt):
+    def _pcap_callback(self, pkt):
 
         eaddr = None
         ipaddr = None
@@ -519,11 +519,11 @@ class ArpMon(object):
             print "load_status_json None"
         return None
 
-    def sig_refresh_statfile(self, cursignal, frame):
+    def _sig_refresh_statfile(self, cursignal, frame):
         # pylint: disable=unused-argument
         self.write_status_json()
 
-    def sig_exit_gracefully(self, cursignal, frame):
+    def _sig_exit_gracefully(self, cursignal, frame):
         # pylint: disable=unused-argument
         """
             Signal handler for clean exits
@@ -844,6 +844,10 @@ def sig_ignore(cursignal, frame):
 #     print_status_all()
 
 
+def validate_config(config_dat):
+    # pylint: disable=unused-argument
+    pass
+
 # def validate_config(config_dat):
 #
 #    if config_dat is None:
@@ -889,11 +893,12 @@ def sig_ignore(cursignal, frame):
 
 def setup_io(am):
 
-    signal.signal(signal.SIGINT, am.sig_exit_gracefully)
-#    signal.signal(signal.SIGTERM, sig_exit_gracefully)
+    signal.signal(signal.SIGINT, am._sig_exit_gracefully)
+#    signal.signal(signal.SIGTERM, am._sig_exit_gracefully)
 #    signal.signal(signal.SIGUSR1, sig_print_status)
-#    signal.signal(signal.SIGUSR2, sig_refresh_statfile)
-    print "init"
+#    signal.signal(signal.SIGUSR2, am._sig_refresh_statfile)
+    if am.verbose:
+        print "init"
 
     if am.redirect_io:
 

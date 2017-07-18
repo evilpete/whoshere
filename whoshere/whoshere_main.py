@@ -3,27 +3,24 @@
     Main calling funtion for whoshere module
 """
 
-from whoshere import *
+from .whoshere import *
 
 def main():
 
-    arpmon = ArpMon()
+    arpm = ArpMon()
 
-    arpmon.parse_args()
+    arpm.parse_args()
 
-    arpmon.load_targets()
+    arpm.load_targets()
 
-    setup_io(arpmon)
+    setup_io(arpm)
 
-    arpmon.run()
+    arpm.run()
 
-    arpmon.watch_threads()
+    arpm.watch_threads()
 
     exit(0)
 
 if __name__ == '__main__':
-
-    if debug:
-        print "__main__"
 
     main()

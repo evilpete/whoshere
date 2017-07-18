@@ -173,3 +173,14 @@ will upload `mtargets.ini` as the targets file to the ISY
 uploaded targets and config files have precedence over local files, this behavior can be over ridden with the options `-c` and/or `-t`
 
 Note: [ISYlib](https://github.com/evilpete/ISYlib-python) is required
+
+
+-------
+
+## ToDo ##
+
+* Some type of automated or assisted setup for mtargets file
+
+-------
+
+## How do I get set up? ##
