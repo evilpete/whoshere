@@ -10,7 +10,7 @@
 # import sys
 # import os
 import argparse
-#import io
+# import io
 import json
 import time
 
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     if verbose:
         print "arpmon.args :", type(arpmon.args)
 
-    #if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
+    # if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
     if arpmon.args.get('upload_config') or arpmon.args.get('upload_targets'):
         if verbose:
             print "arpmon.args", arpmon.args

@@ -1,5 +1,6 @@
 *.py[cod]
 
+whoshere-0*
 whoshere-main.py
 whoshere-iftt-local.py
 .pylintrc

@@ -610,7 +610,6 @@ class ArpMon(object):
 
         sys.stdout.flush()
 
-
     def get_target_dat(self, target_file=None):
         """
          if specified:
@@ -885,10 +884,10 @@ def validate_config(config_dat):
 #            # will raise exception if var does not exist
 #            # myisy.get_var(tp[2])
 #
-##       except socket.error, err:
-##           raise ValueError(err + "\n" + str(tp))
+# #       except socket.error, err:
+# #           raise ValueError(err + "\n" + str(tp))
 #        except Exception, err:
-##            raise ValueError(str(err) + "\n" + str(tp))
+# #            raise ValueError(str(err) + "\n" + str(tp))
 #
 #    return True
 
