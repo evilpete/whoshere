@@ -1,6 +1,7 @@
 *.py[cod]
 
 whoshere-main.py
+whoshere-iftt-local.py
 .pylintrc
 isylib.cfg
 .isylib.cfg
@@ -9,7 +10,6 @@ whoshere.ini
 .git-*
 log/
 Log/
-*.png
 EGG-INFO
 suds
 .exrc
