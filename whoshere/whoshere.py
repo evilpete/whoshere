@@ -135,6 +135,7 @@ class ArpMon(object):
 
         self.target_file = None  # kargs.get('target_file', ArpMon.target_file)
         self.target_data = None
+        self.config_parser = None
 
         self.log_dir = None  # kargs.get('log_dir', ArpMon.log_dir)
         self.pid_dir = None  # kargs.get('pid_dir', ArpMon.pid_dir)
@@ -702,6 +703,7 @@ class ArpMon(object):
         """
 
         ini = ConfigParser()
+        self.config_parser = ini
         # if isinstance(cfile, (file, StringIO.StringIO, io.BytesIO)):
         if isinstance(self.config_data, str) and self.config_data:
             fp = io.BytesIO(self.config_data)

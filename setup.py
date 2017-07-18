@@ -21,7 +21,7 @@ setup(
     author='Peter Shipley',
     author_email='Peter.Shipley@gmail.com',
     packages=find_packages(),
-    scripts=['whoshere-isy.py'],
+    scripts=['/whoshere-isy/whoshere-isy.py', '/whoshere-iftt/whoshere-iftt.py'],
     # url='https://github.com/evilpete/',
     # git='git@bitbucket.org:evilpete/scapy-watch.git',
     license='BSD',

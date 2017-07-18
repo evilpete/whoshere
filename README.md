@@ -20,6 +20,12 @@ Simply install the package then set up targets list of network targets and optio
 You will also need to install [scapy](http://doc.scrapy.org/) :
 https://pypi.python.org/pypi/Scrapy
 
+The quick way
+
+```shell
+    pip install scrapy
+```
+
 
 #### Target File ####
 To run you will to set up a targets list of network targets and optionally a configuration file
@@ -102,7 +108,6 @@ usage: whoshere [-h] [--logdir LOG_DIR] [-t TARGET_FILE] [-c CONFIG_FILE] [-v]
 
 
 `-h`
-`--help`
 : Show this help message and exit
 
 `--logdir` *LOG_DIR*
@@ -139,7 +144,7 @@ usage: whoshere [-h] [--logdir LOG_DIR] [-t TARGET_FILE] [-c CONFIG_FILE] [-v]
 
 #### whoshere-isy ####
 
-[whoshere-isy](/whoshere-isy.py) is a example program that sets [State Variables](https://wiki.universal-devices.com/index.php?title=ISY-99i/ISY-26_INSTEON:Variable_Details) in a [ISY](http://www.universal-devices.com/residential/) standalone home automation controler.
+[whoshere-isy](/whoshere-isy/whoshere-isy.py) is a example program that sets [State Variables](https://wiki.universal-devices.com/index.php?title=ISY-99i/ISY-26_INSTEON:Variable_Details) in a [ISY](http://www.universal-devices.com/residential/) standalone home automation controler.
 The Target `name` field is used to identify the ISY Variables
 
 For Example, the lime:
@@ -151,31 +156,37 @@ will cause the ISY Variable named `is_home` value to be set based on the status 
 failed name matches are silently ignored.
 
 
-[whoshere-isy](/whoshere-isy.py) can optionally download their [targets](/mtargets.json-example) and [config](/whoshere.ini-example) configuration files from the ISY.
+[whoshere-isy](//whoshere-isy/whoshere-isy.py) will try to the [targets](/mtargets.json-example) and [config](/whoshere.ini-example) configuration files from the ISY before loading localy
 
 
 To uploaded to the ISY with the options `--upload-config`  and `--upload-targets`.
 
 
 For example:
+
+To upload `whoshere.ini` config file to the ISY
 ```
     whoshere-isy --config whoshere.ini --upload-config
 ```
-will upload `whoshere.ini` config file to the ISY
 
-
+To upload `mtargets.ini` as the targets file to the ISY
 ```
     whoshere-isy --targets mtargets.ini --upload-targets
 ```
-will upload `mtargets.ini` as the targets file to the ISY
 
+Uploaded targets and config files have precedence over local files, this behavior can be over ridden with the options `-c` and/or `-t`
 
-uploaded targets and config files have precedence over local files, this behavior can be over ridden with the options `-c` and/or `-t`
 
 Note: [ISYlib](https://github.com/evilpete/ISYlib-python) is required
 
+
 See also: [ISY Discussion Group](http://forum.universal-devices.com/topic/22106-whoshere/)
 
+-------
+
+#### whoshere-iftt ####
+
+[whoshere-iftt](/whoshere-iftt/whoshere-iftt.py) is a example program that can me used to trigger [IFTT](https://ifttt.com/) Applets
 
 -------
 
