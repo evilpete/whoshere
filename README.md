@@ -162,6 +162,14 @@ See [whoshere-iftt/README.md](/whoshere-iftt/README.md) for Setup hints
 
 -------
 
+#### whoshere.service ####
+
+[whoshere.service](/systemdt/whoshere.service) is a example systemd config to run whoshere at system boot
+
+See [systemd/README.txt](/systemd/README.txt) for setup instructions
+
+-------
+
 ## ToDo ##
 
 * Some type of automated or assisted setup for mtargets file
