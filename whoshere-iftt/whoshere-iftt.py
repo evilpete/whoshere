@@ -57,14 +57,14 @@ def iftt_callback(s, v=None):
             print "iftt_callback: SKIP:", v['id'], v['cur_val'], "==>", s
 
 
-def add_callbacks(am):
+def add_callbacks(am, ifttkey, ifttevent):
     """
         loop through all targets and add a IFTT callback
     """
     if _debug:
         print "add_var_callbacks", am
 
-    xurl = IFTT_URL.format(IFTT_EVENT, IFTT_KEY)
+    xurl = IFTT_URL.format(ifttevent, ifttkey)
     for c in am.mac_targets.values():
         call_val = {
             'url': xurl,
@@ -82,7 +82,20 @@ def main():
 
     arpm.load_targets()
 
-    add_callbacks(arpm)
+    iftt_key = IFTT_KEY
+    iftt_event = IFTT_EVENT
+
+    #  check the whoshere config for iftt info
+    if arpm.config_parser is not None:
+        ini = arpm.config_parser
+        if ini.has_section('iftt'):
+            if ini.has_option('iftt', 'key'):
+                iftt_key = ini.get('iftt', 'key')
+            if ini.has_option('iftt', 'event'):
+                iftt_event = ini.get('iftt', 'event')
+
+
+    add_callbacks(arpm, iftt_event, iftt_key)
 
     setup_io(arpm)
 
