@@ -19,4 +19,6 @@ Edit [whoshere.html](/WWW/whoshere.html) and edit the line:
 
 to reflect the correct server path for the `status_file` 
 
+![+webpage](/WWW/.screen_shots/Screenshot_44.png)
+
 
