@@ -3,17 +3,17 @@
     Main calling funtion for whoshere module
 """
 
-from .whoshere import *
+import .whoshere
 
 def main():
 
-    arpm = ArpMon()
+    arpm = whoshere.ArpMon()
 
     arpm.parse_args()
 
     arpm.load_targets()
 
-    setup_io(arpm)
+    whoshere.setup_io(arpm)
 
     arpm.run()
 

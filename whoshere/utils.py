@@ -4,11 +4,16 @@ import struct
 import fcntl
 import re
 
-from scapy.all import send, UDP, IP, ICMP, IPv6, ICMPv6EchoRequest
+from scapy.sendrecv import send
+from scapy.layers.l2 import ARP
+from scapy.layers.inet import UDP, IP, ICMP
+from scapy.layers.inet6 import IPv6, ICMPv6EchoRequest
+# from scapy.all import send, UDP, IP, ICMP, IPv6, ICMPv6EchoRequest
+from .conf import TIME_FMT
 
 __all__ = ['mac2ipv6', 'get_brdaddr', 'bcast_icmp', 'bcast_icmp6', 'upnp_probe', 'format_sec', 'normalize_mac']
 
-TIME_FMT = "%Y-%m-%d %H:%M:%S"
+#TIME_FMT = "%Y-%m-%d %H:%M:%S"
 
 
 #    Mac:   00:01:2e:6e:6a:fb Link-local:   fe80::201:2eff:fe6e:6afb
@@ -103,3 +108,14 @@ def normalize_mac(eaddr):
 #       raise ValueError("invalid mac")
     mac = ":".join([i.zfill(2) for i in a]).lower()
     return mac
+
+#
+# Do nothing
+# (syntax check)
+#
+if __name__ == "__main__":
+    import __main__
+    print __main__.__file__
+
+    print "syntax ok"
+    exit(0)

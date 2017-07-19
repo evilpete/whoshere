@@ -46,6 +46,7 @@ from .utils import bcast_icmp, bcast_icmp6, upnp_probe
 from .webhandler import webHandler
 from .mtargets import Mtargets
 
+from .conf import *
 
 # from xmldumper import *
 
@@ -54,17 +55,17 @@ logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 __author__ = "Peter Shipley"
 
 # isy_conf_path = "/WEB/CONF/mtargets.jsn"
-STAT_FILE = "/var/www/whoshere-status"
-WWW_PATH = "/var/www"
-LOG_DIR = "/var/log/whoshere"
-PID_DIR = "/var/run/"
-TIME_AWAY_DEFAULT = 660
-CONFIG_FILE = "whoshere.ini"
-TARGET_FILE = "mtargets.json"
-IFACE = "eth0"  # eth0 em0
-HTTP_PORT_NUMBER = 8088
+# STAT_FILE = "/var/www/whoshere-status"
+# WWW_PATH = "/var/www"
+# LOG_DIR = "/var/log/whoshere"
+# PID_DIR = "/var/run/"
+# TIME_AWAY_DEFAULT = 660
+# CONFIG_FILE = "whoshere.ini"
+# TARGET_FILE = "mtargets.json"
+# IFACE = "eth0"  # eth0 em0
+# HTTP_PORT_NUMBER = 8088
 
-VERBOSE = 0
+# VERBOSE = 0
 
 # conf_data = None
 _verbose = VERBOSE
@@ -86,8 +87,8 @@ _start_time = float(time.time())
 _print_config = None
 
 # time_var_refresh = None
-SNIFF_TIMEOUT = 60 * 16
-TIME_FMT = "%Y-%m-%d %H:%M:%S"
+# SNIFF_TIMEOUT = 60 * 16
+# TIME_FMT = "%Y-%m-%d %H:%M:%S"
 # last_status_change = 0.0
 
 

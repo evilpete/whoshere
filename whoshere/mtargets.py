@@ -6,7 +6,9 @@ import time
 from threading import current_thread
 from scapy.all import srp, send, Ether, ARP, IP, ICMP, IPv6, ICMPv6EchoRequest
 
-from .utils import mac2ipv6, format_sec, TIME_FMT
+from .utils import mac2ipv6, format_sec
+from .conf import TIME_FMT
+
 
 __all__ = ['Mtargets']
 
