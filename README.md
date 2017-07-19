@@ -170,6 +170,15 @@ See [systemd/README.txt](/systemd/README.txt) for setup instructions
 
 -------
 
+#### whoshere.html ####
+
+[whoshere.html](/WWW/whoshere.html) is a html/java page for displaing the current status of monitored network targets
+
+
+See [WWW/README.md](/WWW/README.md) for setup instructions
+
+-------
+
 ## ToDo ##
 
 * Some type of automated or assisted setup for mtargets file
