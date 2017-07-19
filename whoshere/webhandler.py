@@ -4,9 +4,11 @@ import select
 import time
 import json
 
+from .conf import TIME_FMT
 
-TIME_FMT = "%Y-%m-%d %H:%M:%S"
+# TIME_FMT = "%Y-%m-%d %H:%M:%S"
 
+__all__ = ['webHandler']
 
 # logiing hint: https://stackoverflow.com/questions/20281709/how-do-you-override-basehttprequesthandler-log-message-method-to-log-to-a-file
 class webHandler(BaseHTTPRequestHandler):

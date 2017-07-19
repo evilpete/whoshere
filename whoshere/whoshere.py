@@ -30,7 +30,7 @@ import traceback
 import argparse
 import json
 import logging
-import socket
+# import socket
 # import StringIO
 import io
 from ConfigParser import SafeConfigParser as ConfigParser
@@ -46,6 +46,7 @@ from .utils import bcast_icmp, bcast_icmp6, upnp_probe
 from .webhandler import webHandler
 from .mtargets import Mtargets
 
+from .conf import *
 
 # from xmldumper import *
 
@@ -54,17 +55,17 @@ logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 __author__ = "Peter Shipley"
 
 # isy_conf_path = "/WEB/CONF/mtargets.jsn"
-STAT_FILE = "/var/www/whoshere-status"
-WWW_PATH = "/var/www"
-LOG_DIR = "/var/log/whoshere"
-PID_DIR = "/var/run/"
-TIME_AWAY_DEFAULT = 660
-CONFIG_FILE = "whoshere.ini"
-TARGET_FILE = "mtargets.json"
-IFACE = "eth0"  # eth0 em0
-HTTP_PORT_NUMBER = 8088
+# STAT_FILE = "/var/www/whoshere-status"
+# WWW_PATH = "/var/www"
+# LOG_DIR = "/var/log/whoshere"
+# PID_DIR = "/var/run/"
+# TIME_AWAY_DEFAULT = 660
+# CONFIG_FILE = "whoshere.ini"
+# TARGET_FILE = "mtargets.json"
+# IFACE = "eth0"  # eth0 em0
+# HTTP_PORT_NUMBER = 8088
 
-VERBOSE = 0
+# VERBOSE = 0
 
 # conf_data = None
 _verbose = VERBOSE
@@ -86,8 +87,8 @@ _start_time = float(time.time())
 _print_config = None
 
 # time_var_refresh = None
-SNIFF_TIMEOUT = 60 * 16
-TIME_FMT = "%Y-%m-%d %H:%M:%S"
+# SNIFF_TIMEOUT = 60 * 16
+# TIME_FMT = "%Y-%m-%d %H:%M:%S"
 # last_status_change = 0.0
 
 
@@ -135,6 +136,7 @@ class ArpMon(object):
 
         self.target_file = None  # kargs.get('target_file', ArpMon.target_file)
         self.target_data = None
+        self.config_parser = None
 
         self.log_dir = None  # kargs.get('log_dir', ArpMon.log_dir)
         self.pid_dir = None  # kargs.get('pid_dir', ArpMon.pid_dir)
@@ -180,7 +182,7 @@ class ArpMon(object):
         while True:
             # tcpdump -i em0 -v -v ether src 60:be:b5:ad:28:2d
             try:
-                sniff(prn=self.pcap_callback, iface=self.iface,
+                sniff(prn=self._pcap_callback, iface=self.iface,
                       filter=pcap_filter, store=0,
                       timeout=self.sniff_timeout)
             except select.error, se:
@@ -208,7 +210,7 @@ class ArpMon(object):
 
         return
 
-    def pcap_callback(self, pkt):
+    def _pcap_callback(self, pkt):
 
         eaddr = None
         ipaddr = None
@@ -519,11 +521,11 @@ class ArpMon(object):
             print "load_status_json None"
         return None
 
-    def sig_refresh_statfile(self, cursignal, frame):
+    def _sig_refresh_statfile(self, cursignal, frame):
         # pylint: disable=unused-argument
         self.write_status_json()
 
-    def sig_exit_gracefully(self, cursignal, frame):
+    def _sig_exit_gracefully(self, cursignal, frame):
         # pylint: disable=unused-argument
         """
             Signal handler for clean exits
@@ -608,7 +610,6 @@ class ArpMon(object):
             self.print_status_all()
 
         sys.stdout.flush()
-
 
     def get_target_dat(self, target_file=None):
         """
@@ -702,6 +703,7 @@ class ArpMon(object):
         """
 
         ini = ConfigParser()
+        self.config_parser = ini
         # if isinstance(cfile, (file, StringIO.StringIO, io.BytesIO)):
         if isinstance(self.config_data, str) and self.config_data:
             fp = io.BytesIO(self.config_data)
@@ -844,6 +846,10 @@ def sig_ignore(cursignal, frame):
 #     print_status_all()
 
 
+def validate_config(config_dat):
+    # pylint: disable=unused-argument
+    pass
+
 # def validate_config(config_dat):
 #
 #    if config_dat is None:
@@ -879,21 +885,22 @@ def sig_ignore(cursignal, frame):
 #            # will raise exception if var does not exist
 #            # myisy.get_var(tp[2])
 #
-##       except socket.error, err:
-##           raise ValueError(err + "\n" + str(tp))
+# #       except socket.error, err:
+# #           raise ValueError(err + "\n" + str(tp))
 #        except Exception, err:
-##            raise ValueError(str(err) + "\n" + str(tp))
+# #            raise ValueError(str(err) + "\n" + str(tp))
 #
 #    return True
 
 
 def setup_io(am):
 
-    signal.signal(signal.SIGINT, am.sig_exit_gracefully)
-#    signal.signal(signal.SIGTERM, sig_exit_gracefully)
+    signal.signal(signal.SIGINT, am._sig_exit_gracefully)
+#    signal.signal(signal.SIGTERM, am._sig_exit_gracefully)
 #    signal.signal(signal.SIGUSR1, sig_print_status)
-#    signal.signal(signal.SIGUSR2, sig_refresh_statfile)
-    print "init"
+#    signal.signal(signal.SIGUSR2, am._sig_refresh_statfile)
+    if am.verbose:
+        print "init"
 
     if am.redirect_io:
 

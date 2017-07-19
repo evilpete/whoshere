@@ -10,10 +10,11 @@
 # import sys
 # import os
 import argparse
-#import io
+# import io
+import json
 import time
 
-from whoshere import ArpMon, setup_io
+from whoshere import ArpMon, setup_io, validate_config
 
 import ISY
 from ISY.IsyExceptionClass import IsySoapError
@@ -191,7 +192,7 @@ if __name__ == '__main__':
 
     ag = parse_localargs()
     arpmon.args.update(ag)
-    verbose = arpmon.verbose 
+    verbose = arpmon.verbose
 
     targ_dat = download_conf(ISY_TARG_PATH)
     # upload_config = False
@@ -199,13 +200,15 @@ if __name__ == '__main__':
     if True:
         print "downloaded targ config :", targ_dat
 
-    print "arpmon.args :", type(arpmon.args)
+    if verbose:
+        print "arpmon.args :", type(arpmon.args)
 
-    #if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
+    # if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
     if arpmon.args.get('upload_config') or arpmon.args.get('upload_targets'):
-        print "arpmon.args", arpmon.args
-        print "... do upload"
-        # do_uploads()
+        if verbose:
+            print "arpmon.args", arpmon.args
+            print "... do upload"
+        do_uploads()
         exit(0)
 
     # preload var info from ISY controller

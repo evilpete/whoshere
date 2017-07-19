@@ -9,7 +9,7 @@ Group=root
 PIDFile=/var/run/whoshere.pid
 
 Type=simple
-ExecStart=/usr/local/bin/whoshere -r
+ExecStart=/usr/local/bin/whoshere -r -v
 TimeoutStopSec=10
 RestartSec=5s
 KillMode=process
