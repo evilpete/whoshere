@@ -9,7 +9,7 @@ A example program that can me used to trigger Applets via the Maker service webh
 [whoshere-iftt](/whoshere-iftt/whoshere-iftt.py) is a example program that can me used to trigger [IFTT](https://ifttt.com/) Applets
 
 
-Sends a web request to notify IFTT of an status change event 
+Sends a web request to notify IFTT of an status change event
 
 
 ### Setup IFTT Applet ###
@@ -52,9 +52,9 @@ Next we set up the Action:
     For `Choose action service` pick what you want to happen ( send sms, send a 'tweet', send 'email', etc )
 
 
-    for a messaged you can include a `ingredient`, where 
+    for a messaged you can include a `ingredient`, where
     `value1` is the target name
-    `value2` is the target current valuse 
+    `value2` is the target current valuse
     `value3` is the new value
 
     for example :
