@@ -7,6 +7,15 @@ supporting both object oriented and procedural methods
 
 -------
 
+### Intro ###
+
+I wrote a program years ago that monitors for devices on a local network/WiFi and set status variables on a my home automation controler.
+
+Over the years I have found this program **very** useful, so recently I cleaned up the code (somewhat) and checked it into it's own repo.
+While it might not be ready for prime time ( eg: it's in "works for me" status). I figured I would throw it out here..
+
+-------
+
 ## How do I get set up? ##
 
 Simply install the package then set up targets list of network targets and optionally a configuration file
