@@ -3,7 +3,7 @@
     Main calling funtion for whoshere module
 """
 
-import .whoshere
+import whoshere
 
 def main():
 
