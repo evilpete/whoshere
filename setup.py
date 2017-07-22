@@ -14,7 +14,7 @@ import ssl
 
 from distutils.core import setup
 
-version = '0.1.20170717'
+version = '0.1.20170721'
 
 setup(
     name='whoshere',
@@ -23,7 +23,7 @@ setup(
     author_email='Peter.Shipley@gmail.com',
     packages=['whoshere'],
     # packages=find_packages(),
-    scripts=['/whoshere-isy/whoshere-isy.py', '/whoshere-iftt/whoshere-iftt.py'],
+    scripts=['whoshere-isy/whoshere-isy.py', 'whoshere-iftt/whoshere-iftt.py'],
     url='https://github.com/evilpete/whoshere',
     # git='https://github.com/evilpete/whoshere.git',
     license='BSD',
