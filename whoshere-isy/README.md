@@ -9,7 +9,7 @@ For Example, the lime:
 ```
   [ "10.1.1.105", "dc:0b:34:b1:cc:5f", "is_home" ],
 ```
-will cause the ISY Variable named `is_home` value to be set based on the status of device  `dc:0b:34:b1:cc:5f`
+will cause the ISY Variable named `is_home` value to be set based on the status of device `dc:0b:34:b1:cc:5f`
 
 failed name matches are silently ignored.
 
