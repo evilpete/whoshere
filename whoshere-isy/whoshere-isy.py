@@ -159,8 +159,8 @@ def do_uploads(am):
 
     if 'upload_config' in am.args and am.args['upload_config']:
         if 'config_file' in am.args and am.args['config_file']:
-            print "isy_upload_conf(", am.target_file, ",", ISY_CONF_PATH, ")"
-            # isy_upload_conf(am.config_file, ISY_CONF_PATH)
+            print "isy_upload_conf(", am.config_file, ",", ISY_CONF_PATH, ")"
+            isy_upload_conf(am.config_file, ISY_CONF_PATH)
         else:
             print "Config file must be specified with uploading config data"
         exit(0)
@@ -168,7 +168,7 @@ def do_uploads(am):
     if 'upload_targets' in am.args and am.args['upload_targets']:
         if 'target_file' in am.args and am.args['target_file']:
             print "isy_upload_conf(", am.target_file, ",", ISY_TARG_PATH, ")"
-            # isy_upload_conf(am.target_file, ISY_TARG_PATH)
+            isy_upload_conf(am.target_file, ISY_TARG_PATH)
         else:
             print "Target file must be specified with uploading config data"
         exit(0)
@@ -216,6 +216,8 @@ if __name__ == '__main__':
     last_reload = int(time.time())
 
     arpmon.load_targets(target_dat=targ_dat)
+
+    print "arpmon.redirect_io", arpmon.redirect_io
 
     setup_io(arpmon)
 
