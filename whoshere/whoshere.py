@@ -828,6 +828,9 @@ class ArpMon(object):
         print "args", type(args)
         print "args pr", args
         print "vars args", vars(args)
+        print "redirect_io", self.redirect_io
+        print "log_dir", self.log_dir
+
 
         # redirect_io=1
         # exit(0)
