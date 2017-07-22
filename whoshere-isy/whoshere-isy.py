@@ -125,7 +125,7 @@ def download_conf(config_path=None):
 
 def isy_callback(s, v):
     # pylint: disable=unused-argument
-    print "isy_callback", (s, v), v.name
+    # print "isy_callback", (s, v), v.name
 
     # 3 h = 10800 sec
 #    time_now = int(time.time())
@@ -135,7 +135,7 @@ def isy_callback(s, v):
 #        print "isy_callback : load_vars"
 
     if v.value != s:
-        print "isy_callback", v.name, v.value, "==>", s
+        # print "isy_callback", v.name, v.value, "==>", s
         v.value = s
 
 
@@ -194,22 +194,22 @@ if __name__ == '__main__':
     arpmon.args.update(ag)
     verbose = arpmon.verbose
 
+    # if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
+    if arpmon.args.get('upload_config') or arpmon.args.get('upload_targets'):
+        if verbose:
+            print "arpmon.args", arpmon.args
+            print "... do upload"
+        do_uploads(arpmon)
+        exit(0)
+
     targ_dat = download_conf(ISY_TARG_PATH)
     # upload_config = False
-
     if True:
         print "downloaded targ config :", targ_dat
 
     if verbose:
         print "arpmon.args :", type(arpmon.args)
 
-    # if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
-    if arpmon.args.get('upload_config') or arpmon.args.get('upload_targets'):
-        if verbose:
-            print "arpmon.args", arpmon.args
-            print "... do upload"
-        do_uploads()
-        exit(0)
 
     # preload var info from ISY controller
     myisy.load_vars()
