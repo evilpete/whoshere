@@ -510,13 +510,13 @@ class ArpMon(object):
         try:
             if os.path.isfile(jsonfile):
                 with open(jsonfile, 'r', 0) as fp:
+                    jdata = json.load(fp, parse_int=int, parse_float=float)
                     if _verbose:
                         print "load_status_json: reading", jsonfile, len(jdata)
-                    jdata = json.load(fp, parse_int=int, parse_float=float)
             # pprint.pprint(jdata)
             return jdata
         except Exception, err:
-            print "load_status_json", err
+            print "load_status_json err:", err
         if _verbose:
             print "load_status_json None"
         return None
@@ -589,7 +589,7 @@ class ArpMon(object):
         if jd is not None:
             # print "jd[0][time] =", (_start_time - jd[0]['time'])
             if (_start_time - jd[0]['time']) < 1200:
-                print >> sys.stdout, "Loading status_json"
+                print >> sys.stdout, "PreLoading status_json"
                 for d in jd:
                     if 'mac' in d:
                         m = d['mac']
