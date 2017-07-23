@@ -37,27 +37,32 @@ body {
 <SCRIPT LANGUAGE="JavaScript">
 
     var report_obj = null
-    var jdata_status = null
+    var status_data = null
+    var targ_data = null
 
     var next_load = 0
     var data_age = 0
-    var data_status = null
 
     function do_all() {
-        jdata_status=jdata[0]
+
+        status_data=jdata[0]
+        targ_data=jdata
+        targ_data.splice(0,1)
+
+        // console.log("do_all targ_data :" + targ_data.length  + targ_data)
 
         var dtime = Date.now() / 1000
 
         // console.log('do_all')
 
-        if ( jdata_status.refresh_time ) {
+        if ( status_data.refresh_time ) {
             // if less the 20 min old
-            data_age = dtime - jdata_status.time
+            data_age = dtime - status_data.time
 
-            console.log(data_age.toString() +  " < " + jdata_status.refresh_time.toString())
-            if ( data_age  < jdata_status.refresh_time ) {
+            console.log(data_age.toString() +  " < " + status_data.refresh_time.toString())
+            if ( data_age  < status_data.refresh_time ) {
 
-                next_load = jdata_status.refresh_time - data_age
+                next_load = status_data.refresh_time - data_age
 
                 // shouldn't happen but check anyway
                 if ( next_load > 0) {
@@ -92,14 +97,14 @@ body {
 
     sort_mac_rev=true
     function sort_mac() {
-        jdata.sort(sort_by('mac', sort_mac_rev, lc));
+        targ_data.sort(sort_by('mac', sort_mac_rev, lc));
         if (sort_mac_rev) { sort_mac_rev = false } else { sort_mac_rev = true }
         do_report()
     }
 
     sort_stat_rev=true
     function sort_stat() {
-        jdata.sort(sort_by('stat', sort_stat_rev, parseInt));
+        targ_data.sort(sort_by('stat', sort_stat_rev, parseInt));
         if (sort_stat_rev) { sort_stat_rev = false } else { sort_stat_rev = true }
         do_report()
     }
@@ -107,21 +112,21 @@ body {
     sort_name_rev=false
     function sort_name() {
         // console.log('#sort_name ' + sort_name_rev);
-        jdata.sort(sort_by('name', sort_name_rev, lc));
+        targ_data.sort(sort_by('name', sort_name_rev, lc));
         if (sort_name_rev) { sort_name_rev = false } else { sort_name_rev = true }
         do_report()
     }
 
     sort_seen_rev = true
     function sort_seen() {
-        jdata.sort(sort_by('last_seen', sort_seen_rev, parseInt));
+        targ_data.sort(sort_by('last_seen', sort_seen_rev, parseInt));
         if (sort_seen_rev) { sort_seen_rev = false } else { sort_seen_rev = true }
         do_report()
     }
 
     sort_change_rev=true
     function sort_change() {
-        jdata.sort(sort_by('last_change', sort_change_rev, parseInt));
+        targ_data.sort(sort_by('last_change', sort_change_rev, parseInt));
         if (sort_change_rev) { sort_change_rev = false } else { sort_change_rev = true }
         do_report()
     }
@@ -134,29 +139,28 @@ body {
 
         var dtime = Date.now() / 1000
 
+        /// console.log(targ_data)
+
         // console.log('do_report')
 
         if ( ! report_obj ) {
             report_obj = document.getElementById("report")
         }
 
-
-
-
-        head_title = "Start_Time : " + jdata_status.start_time_str + "\n"
-                   + "Prog : " + jdata_status.prog + "\n"
-                   + "Pid : " + jdata_status.pid + "\n"
-                   + "Card Count : " + jdata_status.len + "\n"
-                   + "Refresh_Time : " + jdata_status.refresh_time
+        var head_title = "Start_Time : " + status_data.start_time_str + "\n"
+                   + "Prog : " + status_data.prog + "\n"
+                   + "Pid : " + status_data.pid + "\n"
+                   + "Card Count : " + status_data.len + "\n"
+                   + "Refresh_Time : " + status_data.refresh_time
 
         var date_color = "white"
-        if ( (dtime - jdata_status.time) < 30) {
+        if ( (dtime - status_data.time) < 30) {
             date_color = "orange"
         }
 
-        htmlrep = "<TABLE NAME='tb_0' ID='tb_0'>"
+        var htmlrep = "<TABLE NAME='tb_0' ID='tb_0'>"
                 + "<TR><TH id=datestr style='color:" + date_color + ";' colspan='5' + title='" + head_title + "'>"
-                    + jdata_status.time_str + "</TH></TR>"
+                    + status_data.time_str + "</TH></TR>"
                 + "<TR title='Click Sort'>"
                 + "<TD OnClick='Javascript:sort_mac();'>MAC</TD>"
                 + "<TD OnClick='Javascript:sort_stat();'>&nbsp;</TD>"
@@ -167,53 +171,51 @@ body {
 
         var itemc=0
 
-        for (pp in jdata) {
+        for (pp in targ_data) {
 
-            if ( jdata[pp].name == "status" ) continue;
+            if ( targ_data[pp].name == "status" ) continue;
 
             var scolor="white"
             var mcolor="white"
             var ncolor="white"
             var ccolor="white"
 
-            if (jdata[pp].stat == "1") {
+            if (targ_data[pp].stat == "1") {
                 mcolor="#44FF44"
-            } else if (jdata[pp].stat == "-1") {
+            } else if (targ_data[pp].stat == "-1") {
                 mcolor="gray"
             }
 
-            if ( Number(jdata[pp].last_seen) < 1200) {
+            var last_seen_str = targ_data[pp].last_seen_str
+            if ( Number(targ_data[pp].last_seen) < 1200) {
                 last_seen_str = "&nbsp;"
                 ccolor="gray"
-            } else {
-                last_seen_str = jdata[pp].last_seen_str
             }
 
-            if ( Number(jdata[pp].last_change) == 0) {
+            var last_change_str = targ_data[pp].last_change_str
+            if ( Number(targ_data[pp].last_change) == 0) {
                 last_change_str = "&nbsp;"
-            } else {
-                last_change_str = jdata[pp].last_change_str
-            }
+            } 
 
-            if (jdata[pp].stat == "0" && (dtime - Number(jdata[pp].last_change)) < 1200) {
+            if (targ_data[pp].stat == "0" && (dtime - Number(targ_data[pp].last_change)) < 1200) {
                 ncolor="yellow"
             }
 
-            if ( (dtime - Number(jdata[pp].last_change)) < 1200) {
+            if ( (dtime - Number(targ_data[pp].last_change)) < 1200) {
                 ccolor="orange"
             }
 
             htmlrep += "<TR>"
-                    + "<TD id=mac" + itemc + " title='" + jdata[pp].ip + "'>"
+                    + "<TD id=mac" + itemc + " title='" + targ_data[pp].ip + "'>"
                         + "<font color='" + mcolor + "'>"
-                        + jdata[pp].mac
+                        + targ_data[pp].mac
                         + "</font></TD>"
                     + "<TD id=stat" + itemc + ">"
-                        + jdata[pp].stat
+                        + targ_data[pp].stat
                         + "</TD>"
                     + "<TD id=name" + itemc + ">"
                         + "<font color='" + ncolor + "'>"
-                        + jdata[pp].name
+                        + targ_data[pp].name
                         + "</font></TD>"
                     + "<TD id=lseen" + itemc + ">"
                         + "<font color='" + scolor + "'>"
