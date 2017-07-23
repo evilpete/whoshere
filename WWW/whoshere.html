@@ -39,9 +39,36 @@ body {
     var report_obj = null
     var jdata_status = null
 
+    var next_load = 0
+    var data_age = 0
+    var data_status = null
+
     function do_all() {
         jdata_status=jdata[0]
-        jdata.splice(0,1)
+
+        var dtime = Date.now() / 1000
+
+        // console.log('do_all')
+
+        if ( jdata_status.refresh_time ) {
+            // if less the 20 min old
+            data_age = dtime - jdata_status.time
+
+            console.log(data_age.toString() +  " < " + jdata_status.refresh_time.toString())
+            if ( data_age  < jdata_status.refresh_time ) {
+
+                next_load = jdata_status.refresh_time - data_age
+
+                // shouldn't happen but check anyway
+                if ( next_load > 0) {
+                    setTimeout(function() {
+                        location.reload();
+                        },next_load * 1000);
+                        console.log('reload in ' + next_load.toString());
+                }
+
+            }
+        }
         do_report()
     }
 
@@ -105,12 +132,31 @@ body {
 
     function do_report() {
 
+        var dtime = Date.now() / 1000
+
+        // console.log('do_report')
+
         if ( ! report_obj ) {
             report_obj = document.getElementById("report")
         }
 
+
+
+
+        head_title = "Start_Time : " + jdata_status.start_time_str + "\n"
+                   + "Prog : " + jdata_status.prog + "\n"
+                   + "Pid : " + jdata_status.pid + "\n"
+                   + "Card Count : " + jdata_status.len + "\n"
+                   + "Refresh_Time : " + jdata_status.refresh_time
+
+        var date_color = "white"
+        if ( (dtime - jdata_status.time) < 30) {
+            date_color = "orange"
+        }
+
         htmlrep = "<TABLE NAME='tb_0' ID='tb_0'>"
-                + "<TR><TH id=datastr colspan='5'>" + jdata_status.time_str + "</TH></TR>"
+                + "<TR><TH id=datestr style='color:" + date_color + ";' colspan='5' + title='" + head_title + "'>"
+                    + jdata_status.time_str + "</TH></TR>"
                 + "<TR title='Click Sort'>"
                 + "<TD OnClick='Javascript:sort_mac();'>MAC</TD>"
                 + "<TD OnClick='Javascript:sort_stat();'>&nbsp;</TD>"
@@ -119,16 +165,16 @@ body {
                 + "<TD OnClick='Javascript:sort_change();'>Last Change</TD>"
                 + "</TR>"
 
-        itemc=0
-        dtime = Date.now() / 1000
+        var itemc=0
+
         for (pp in jdata) {
 
             if ( jdata[pp].name == "status" ) continue;
 
-            scolor="white"
-            mcolor="white"
-            ncolor="white"
-            ccolor="white"
+            var scolor="white"
+            var mcolor="white"
+            var ncolor="white"
+            var ccolor="white"
 
             if (jdata[pp].stat == "1") {
                 mcolor="#44FF44"
@@ -158,7 +204,7 @@ body {
             }
 
             htmlrep += "<TR>"
-                    + "<TD id=mac" + itemc + ">"
+                    + "<TD id=mac" + itemc + " title='" + jdata[pp].ip + "'>"
                         + "<font color='" + mcolor + "'>"
                         + jdata[pp].mac
                         + "</font></TD>"

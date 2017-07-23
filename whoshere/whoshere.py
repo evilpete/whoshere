@@ -478,8 +478,9 @@ class ArpMon(object):
             'time_str': str(time.strftime(TIME_FMT, time.localtime(time_now))),
             'start_time': _start_time,
             'start_time_str': str(time.strftime(TIME_FMT, time.localtime(_start_time))),
-            'pid': os.getppid(),
+            'pid': os.getpid(),
             'len': len(self.mac_targets),
+            'refresh_time': self.sniff_timeout
             })
 
         # for c in self.mac_targets.values():
