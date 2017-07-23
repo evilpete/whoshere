@@ -36,28 +36,27 @@ body {
 
 <SCRIPT LANGUAGE="JavaScript">
 
-    var report_obj = null
-    var status_data = null
-    var targ_data = null
+    var report_obj = null;
+    var status_data = null;
+    var targ_data = null;
 
-    var next_load = 0
-    var data_age = 0
+    var next_load = 0;
+    var data_age = 0;
 
     function do_all() {
 
-        status_data=jdata[0]
-        targ_data=jdata
-        targ_data.splice(0,1)
+        status_data = jdata[0];
+        targ_data = jdata.slice(1,);
 
         // console.log("do_all targ_data :" + targ_data.length  + targ_data)
 
-        var dtime = Date.now() / 1000
+        var dtime = Date.now() / 1000;
 
         // console.log('do_all')
 
         if ( status_data.refresh_time ) {
             // if less the 20 min old
-            data_age = dtime - status_data.time
+            data_age = dtime - status_data.time;
 
             console.log(data_age.toString() +  " < " + status_data.refresh_time.toString())
             if ( data_age  < status_data.refresh_time ) {
@@ -93,23 +92,23 @@ body {
         }
     }
 
-    function lc(s) { return s.toString().toLowerCase() }
+    function lc(s) { return s.toString().toLowerCase(); }
 
-    sort_mac_rev=true
+    sort_mac_rev = true;
     function sort_mac() {
         targ_data.sort(sort_by('mac', sort_mac_rev, lc));
         if (sort_mac_rev) { sort_mac_rev = false } else { sort_mac_rev = true }
         do_report()
     }
 
-    sort_stat_rev=true
+    sort_stat_rev = true;
     function sort_stat() {
         targ_data.sort(sort_by('stat', sort_stat_rev, parseInt));
         if (sort_stat_rev) { sort_stat_rev = false } else { sort_stat_rev = true }
         do_report()
     }
 
-    sort_name_rev=false
+    sort_name_rev = false;
     function sort_name() {
         // console.log('#sort_name ' + sort_name_rev);
         targ_data.sort(sort_by('name', sort_name_rev, lc));
@@ -117,14 +116,14 @@ body {
         do_report()
     }
 
-    sort_seen_rev = true
+    sort_seen_rev = true;
     function sort_seen() {
         targ_data.sort(sort_by('last_seen', sort_seen_rev, parseInt));
         if (sort_seen_rev) { sort_seen_rev = false } else { sort_seen_rev = true }
         do_report()
     }
 
-    sort_change_rev=true
+    sort_change_rev = true;
     function sort_change() {
         targ_data.sort(sort_by('last_change', sort_change_rev, parseInt));
         if (sort_change_rev) { sort_change_rev = false } else { sort_change_rev = true }
@@ -169,27 +168,27 @@ body {
                 + "<TD OnClick='Javascript:sort_change();'>Last Change</TD>"
                 + "</TR>"
 
-        var itemc=0
+        var itemc = 0;
 
         for (pp in targ_data) {
 
             if ( targ_data[pp].name == "status" ) continue;
 
-            var scolor="white"
-            var mcolor="white"
-            var ncolor="white"
-            var ccolor="white"
+            var scolor = "white";
+            var mcolor = "white";
+            var ncolor = "white";
+            var ccolor = "white";
 
             if (targ_data[pp].stat == "1") {
-                mcolor="#44FF44"
+                mcolor = "#44FF44";
             } else if (targ_data[pp].stat == "-1") {
-                mcolor="gray"
+                mcolor = "gray";
             }
 
             var last_seen_str = targ_data[pp].last_seen_str
             if ( Number(targ_data[pp].last_seen) < 1200) {
-                last_seen_str = "&nbsp;"
-                ccolor="gray"
+                last_seen_str = "&nbsp;";
+                ccolor = "gray"
             }
 
             var last_change_str = targ_data[pp].last_change_str
@@ -198,11 +197,11 @@ body {
             } 
 
             if (targ_data[pp].stat == "0" && (dtime - Number(targ_data[pp].last_change)) < 1200) {
-                ncolor="yellow"
+                ncolor = "yellow";
             }
 
             if ( (dtime - Number(targ_data[pp].last_change)) < 1200) {
-                ccolor="orange"
+                ccolor = "orange";
             }
 
             htmlrep += "<TR>"
@@ -225,13 +224,13 @@ body {
                         + "<font color='" + ccolor + "'>"
                         + last_change_str
                         + "</font></TD>"
-                + "</TR>"
+                + "</TR>";
 
-            itemc += 1
+            itemc += 1;
         }
-        htmlrep += "</TABLE>"
+        htmlrep += "</TABLE>";
 
-        report_obj.innerHTML=  htmlrep
+        report_obj.innerHTML = htmlrep;
     }
 
 </script>
