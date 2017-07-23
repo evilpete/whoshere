@@ -496,7 +496,7 @@ class ArpMon(object):
             # fp.write('"astat":')
             json.dump(ddat, fp, sort_keys=True, indent=2)
 
-        with open(self.stat_file + '_jdata.js', 'w+', 0) as fp:
+        with open(self.stat_file + '.js', 'w+', 0) as fp:
             fp.write('jdata = ')
             json.dump(ddat, fp, sort_keys=True, indent=2)
         return
@@ -830,6 +830,7 @@ class ArpMon(object):
         print "vars args", vars(args)
         print "redirect_io", self.redirect_io
         print "log_dir", self.log_dir
+        print "pid_dir", self.pid_dir
 
 
         # redirect_io=1
