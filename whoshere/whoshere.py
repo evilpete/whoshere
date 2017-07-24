@@ -478,8 +478,9 @@ class ArpMon(object):
             'time_str': str(time.strftime(TIME_FMT, time.localtime(time_now))),
             'start_time': _start_time,
             'start_time_str': str(time.strftime(TIME_FMT, time.localtime(_start_time))),
-            'pid': os.getppid(),
+            'pid': os.getpid(),
             'len': len(self.mac_targets),
+            'refresh_time': self.sniff_timeout
             })
 
         # for c in self.mac_targets.values():
@@ -496,7 +497,7 @@ class ArpMon(object):
             # fp.write('"astat":')
             json.dump(ddat, fp, sort_keys=True, indent=2)
 
-        with open(self.stat_file + '_jdata.js', 'w+', 0) as fp:
+        with open(self.stat_file + '.js', 'w+', 0) as fp:
             fp.write('jdata = ')
             json.dump(ddat, fp, sort_keys=True, indent=2)
         return
@@ -510,13 +511,13 @@ class ArpMon(object):
         try:
             if os.path.isfile(jsonfile):
                 with open(jsonfile, 'r', 0) as fp:
+                    jdata = json.load(fp, parse_int=int, parse_float=float)
                     if _verbose:
                         print "load_status_json: reading", jsonfile, len(jdata)
-                    jdata = json.load(fp, parse_int=int, parse_float=float)
             # pprint.pprint(jdata)
             return jdata
         except Exception, err:
-            print "load_status_json", err
+            print "load_status_json err:", err
         if _verbose:
             print "load_status_json None"
         return None
@@ -589,7 +590,7 @@ class ArpMon(object):
         if jd is not None:
             # print "jd[0][time] =", (_start_time - jd[0]['time'])
             if (_start_time - jd[0]['time']) < 1200:
-                print >> sys.stdout, "Loading status_json"
+                print >> sys.stdout, "PreLoading status_json"
                 for d in jd:
                     if 'mac' in d:
                         m = d['mac']
@@ -830,6 +831,7 @@ class ArpMon(object):
         print "vars args", vars(args)
         print "redirect_io", self.redirect_io
         print "log_dir", self.log_dir
+        print "pid_dir", self.pid_dir
 
 
         # redirect_io=1

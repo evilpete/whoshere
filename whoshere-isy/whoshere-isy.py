@@ -184,7 +184,8 @@ if __name__ == '__main__':
     myisy = ISY.Isy(parsearg=1, eventupdates=0, faststart=1)  # debug=0x223)
 
     conf_dat = download_conf(ISY_CONF_PATH)
-    print "download_conf(ISY_CONF_PATH)", conf_dat
+    if verbose > 1:
+        print "download_conf(ISY_CONF_PATH)", conf_dat
     # if conf_dat is not None:
     #    fp = io.BytesIO(conf_dat)
 
@@ -204,7 +205,7 @@ if __name__ == '__main__':
 
     targ_dat = download_conf(ISY_TARG_PATH)
     # upload_config = False
-    if True:
+    if verbose > 1:
         print "downloaded targ config :", targ_dat
 
     if verbose:
@@ -217,7 +218,9 @@ if __name__ == '__main__':
 
     arpmon.load_targets(target_dat=targ_dat)
 
-    print "arpmon.redirect_io", arpmon.redirect_io
+
+    if verbose > 1:
+        print "arpmon.redirect_io", arpmon.redirect_io
 
     setup_io(arpmon)
 
