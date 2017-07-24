@@ -558,7 +558,7 @@ class ArpMon(object):
         else:
             self.target_data = target_dat
 
-        if _verbose:
+        if _verbose > 1:
             print "target_data:", self.target_data
 
         if _print_config is not None:
@@ -603,7 +603,7 @@ class ArpMon(object):
     #    else:
     #       print "no load_status_json()"
 
-        if _verbose:
+        if _verbose > 1:
             # print "Target Macs", " ".join(mac_targets.keys())
             for c in self.mac_targets.values():
                 print "mac_targets = {:<4}: {:<19}{:<5}".format(" ", c.name, c.is_active)
@@ -906,6 +906,9 @@ def setup_io(am):
 #    signal.signal(signal.SIGUSR2, am._sig_refresh_statfile)
     if am.verbose:
         print "init"
+        print "setup_io : redirect_io : ", am.redirect_io
+        print "setup_io : log_dir : ", am.log_dir
+        print "setup_io : pid_dir : ", am.pid_dir
 
     if am.redirect_io:
 
