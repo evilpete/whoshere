@@ -129,6 +129,9 @@ class ArpMon(object):
         self.http_thread = None
         self.http_port = None
 
+        self.last_write = 0
+        self.do_stat_write = 0
+
         self.stat_file = None  # kargs.get('stat_file', ArpMon.stat_file)
 
         self.config_file = None  # kargs.get('config_file')
@@ -198,12 +201,14 @@ class ArpMon(object):
 #                print time.strftime(TIME_FMT, time.localtime()), "\tping thread died", self.ping_thread
 #                break
 
+            time_now = int(time.time())
             if _verbose or _debug:
-                if verbose_time < int(time.time()):
-                    verbose_time = int(time.time()) + (self.time_var_refresh * 4)
+                if verbose_time < time_now:
+                    verbose_time = time_now + (self.time_var_refresh * 4)
                     self.print_status_all()
 
-            self.write_status_json()
+            # self.write_status_json()
+            # self.last_write = time_now
 
             # sys.stdout.flush()
             # sys.stderr.flush()
@@ -236,6 +241,8 @@ class ArpMon(object):
 
             # dont react to *every* packet in a row
             if (time_since > self.time_recheck * 3) or (self.mac_targets[eaddr].is_active < 1):
+                if self.mac_targets[eaddr].is_active:
+                    self.do_stat_write = True
                 self.mac_targets[eaddr].set_status(1)
             else:
                 self.mac_targets[eaddr].last_seen = ti
@@ -317,9 +324,12 @@ class ArpMon(object):
 
     def watch_threads(self):
 
+        verbose_print_status_time = int(time.time()) + (self.time_var_refresh * 4)
+
         while True:
 
             time.sleep(self.time_sleep)
+            time_now = time.time()
 
             if self.ping_thread is not None and not self.ping_thread.is_alive():
                 print time.strftime(TIME_FMT, time.localtime()), "\tping thread died", self.ping_thread
@@ -335,6 +345,17 @@ class ArpMon(object):
                 print time.strftime(TIME_FMT, time.localtime()), "\thttp_thread thread died", self.http_thread
                 # self.start_http()
                 break
+
+
+            if _verbose or _debug:
+                if verbose_print_status_time < time_now:
+                    verbose_print_status_time = time_now + (self.time_var_refresh * 4)
+                    self.print_status_all()
+
+            if ((time_now >= (self.last_write + self.sniff_timeout)) or self.do_stat_write):
+                self.write_status_json()
+                self.last_write = time_now
+                self.do_stat_write = False
 
     #
     # Send arp and/or pings if we have not heard from the target recently
@@ -405,6 +426,7 @@ class ArpMon(object):
         self.print_status_all()
 
         self.write_status_json()
+        self.last_write = int(time_now)
 
         if _verbose > 1:
             print time.strftime(TIME_FMT, time.localtime()), "\tping_loop start"
@@ -445,6 +467,7 @@ class ArpMon(object):
                     #    c.last_seen = int(_start_time)
 
                     c.set_status(0)
+                    self.do_stat_write = True
 
 #
 # time_sleep  ping_loop sleep time
@@ -500,6 +523,7 @@ class ArpMon(object):
         with open(self.stat_file + '.js', 'w+', 0) as fp:
             fp.write('jdata = ')
             json.dump(ddat, fp, sort_keys=True, indent=2)
+
         return
 
     def load_status_json(self):
@@ -511,9 +535,9 @@ class ArpMon(object):
         try:
             if os.path.isfile(jsonfile):
                 with open(jsonfile, 'r', 0) as fp:
-                    jdata = json.load(fp, parse_int=int, parse_float=float)
                     if _verbose:
                         print "load_status_json: reading", jsonfile, len(jdata)
+                    jdata = json.load(fp, parse_int=int, parse_float=float)
             # pprint.pprint(jdata)
             return jdata
         except Exception, err:
