@@ -58,7 +58,7 @@ body {
             // if less the 20 min old
             data_age = dtime - status_data.time;
 
-            console.log(data_age.toString() +  " < " + status_data.refresh_time.toString())
+            // console.log(data_age.toString() +  " < " + status_data.refresh_time.toString())
             if ( data_age  < status_data.refresh_time ) {
 
                 next_load = status_data.refresh_time - data_age
@@ -68,7 +68,7 @@ body {
                     setTimeout(function() {
                         location.reload();
                         },next_load * 1000);
-                        console.log('reload in ' + next_load.toString());
+                        // console.log('reload in ' + next_load.toString());
                 }
 
             }
@@ -136,26 +136,29 @@ body {
 
     function do_report() {
 
-        var dtime = Date.now() / 1000
+        var dtime = Date.now() / 1000;
 
         /// console.log(targ_data)
 
         // console.log('do_report')
 
         if ( ! report_obj ) {
-            report_obj = document.getElementById("report")
+            report_obj = document.getElementById("report");
         }
 
         var head_title = "Start_Time : " + status_data.start_time_str + "\n"
                    + "Prog : " + status_data.prog + "\n"
                    + "Pid : " + status_data.pid + "\n"
                    + "Card Count : " + status_data.len + "\n"
-                   + "Refresh_Time : " + status_data.refresh_time
+                   + "Refresh_Time : " + status_data.refresh_time;
 
-        var date_color = "white"
-        if ( (dtime - status_data.time) < 30) {
-            date_color = "orange"
+
+        var date_color = "white";
+        if ( (dtime - status_data.time) > (status_data.refresh_time + 180) ) {
+            date_color = "orange";
         }
+
+        // console.log('t - s.t = ' +  dtime + ' - ' + status_data.time + ' = '  + (dtime - status_data.time) );
 
         var htmlrep = "<TABLE NAME='tb_0' ID='tb_0'>"
                 + "<TR><TH id=datestr style='color:" + date_color + ";' colspan='5' + title='" + head_title + "'>"
@@ -166,13 +169,13 @@ body {
                 + "<TD OnClick='Javascript:sort_name();'>Name</TD>"
                 + "<TD OnClick='Javascript:sort_seen();'>Last Seen</TD>"
                 + "<TD OnClick='Javascript:sort_change();'>Last Change</TD>"
-                + "</TR>"
+                + "</TR>";
 
         var itemc = 0;
 
         for (pp in targ_data) {
 
-            if ( targ_data[pp].name == "status" ) continue;
+            if ( targ_data[pp].name == "status" ) { continue; }
 
             var scolor = "white";
             var mcolor = "white";
@@ -194,7 +197,7 @@ body {
             var last_change_str = targ_data[pp].last_change_str
             if ( Number(targ_data[pp].last_change) == 0) {
                 last_change_str = "&nbsp;"
-            } 
+            }
 
             if (targ_data[pp].stat == "0" && (dtime - Number(targ_data[pp].last_change)) < 1200) {
                 ncolor = "yellow";
