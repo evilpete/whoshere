@@ -111,7 +111,7 @@ class ArpMon(object):
         'log_dir': LOG_DIR,
         'pid_dir': PID_DIR,
         'iface': IFACE,
-        'http_port': HTTP_PORT_NUMBER,
+        # 'http_port': None, # HTTP_PORT_NUMBER,
         'verbose': VERBOSE,
     }
 
@@ -150,7 +150,7 @@ class ArpMon(object):
         self.time_away = None  # kargs.get('time_away', ArpMon.time_away_default)
         self.time_sleep = None
         self.time_recheck = None
-        self.time_var_refresh = None
+        # self.time_var_refresh = None
         self.sniff_timeout = None
 
     def add_target(self, mtarg):
@@ -174,7 +174,7 @@ class ArpMon(object):
         return 0
 
     def sniff_loop(self):
-        verbose_time = int(time.time()) + (self.time_var_refresh * 4)
+        verbose_time = int(time.time()) + (self.time_away * 8)
         # last_var_ref = int(time.time())
 
         pcap_filter = "ether src {}".format(" or ".join(self.mac_targets.keys()))
@@ -204,7 +204,7 @@ class ArpMon(object):
             time_now = int(time.time())
             if _verbose or _debug:
                 if verbose_time < time_now:
-                    verbose_time = time_now + (self.time_var_refresh * 4)
+                    verbose_time = time_now + (self.time_away * 8)
                     self.print_status_all()
 
             # self.write_status_json()
@@ -241,7 +241,7 @@ class ArpMon(object):
 
             # dont react to *every* packet in a row
             if (time_since > self.time_recheck * 3) or (self.mac_targets[eaddr].is_active < 1):
-                if self.mac_targets[eaddr].is_active:
+                if not self.mac_targets[eaddr].is_active:
                     self.do_stat_write = True
                 self.mac_targets[eaddr].set_status(1)
             else:
@@ -324,7 +324,7 @@ class ArpMon(object):
 
     def watch_threads(self):
 
-        verbose_print_status_time = int(time.time()) + (self.time_var_refresh * 4)
+        verbose_print_status_time = int(time.time()) + (self.time_away * 8)
 
         while True:
 
@@ -349,10 +349,13 @@ class ArpMon(object):
 
             if _verbose or _debug:
                 if verbose_print_status_time < time_now:
-                    verbose_print_status_time = time_now + (self.time_var_refresh * 4)
+                    verbose_print_status_time = time_now + (self.time_away * 8)
                     self.print_status_all()
 
             if ((time_now >= (self.last_write + self.sniff_timeout)) or self.do_stat_write):
+                if _verbose > 1  or _debug:
+                    print time.strftime(TIME_FMT, time.localtime()), "\twatch_threads :", \
+                        (time_now - (self.last_write + self.sniff_timeout)), self.do_stat_write
                 self.write_status_json()
                 self.last_write = time_now
                 self.do_stat_write = False
@@ -389,17 +392,17 @@ class ArpMon(object):
         # print_status_all()
 
         # a couple quick one time broadcasts
-        if _verbose:
+        if _verbose > 1:
             print "upnp_probe"
         upnp_probe()
         time.sleep(.30)
 
-        if _verbose:
+        if _verbose > 1:
             print "ping bcast"
         bcast_icmp(self.iface)
         time.sleep(.30)
 
-        if _verbose:
+        if _verbose > 1:
             print "ping6 bcast"
         bcast_icmp6()
         time.sleep(.30)
@@ -427,6 +430,7 @@ class ArpMon(object):
 
         self.write_status_json()
         self.last_write = int(time_now)
+        self.do_stat_write = False
 
         if _verbose > 1:
             print time.strftime(TIME_FMT, time.localtime()), "\tping_loop start"
@@ -473,7 +477,7 @@ class ArpMon(object):
 # time_sleep  ping_loop sleep time
 # time_recheck    = time since last packet before using arping
 # time_away       = amount of time before declaring device gone
-# time_var_refresh = amount of time before polling IST var to make sure things are in sync
+# time_var_refresh =
 # sniff_timeout    = timeout for capy.sniff, mostly used for house cleaning
 #
 
@@ -789,11 +793,11 @@ class ArpMon(object):
         print "\nargs", vars(args)
         print "\nmerged_args", merged_args
 
-        if 'verbose' in merged_args:
+        if 'verbose' in merged_args and merged_args['verbose'] is not None:
             self.verbose = int(merged_args['verbose'])
             _verbose = self.verbose
 
-        if 'http_port' in merged_args:
+        if 'http_port' in merged_args and merged_args['http_port'] is not None:
             self.http_port = int(merged_args['http_port'])
 
         if 'stat_file' in merged_args:
@@ -811,7 +815,7 @@ class ArpMon(object):
         if 'iface' in merged_args:
             self.iface = merged_args['iface']
 
-        if 'time_away' in merged_args:
+        if 'time_away' in merged_args and merged_args['time_away'] is not None:
             self.time_away = int(merged_args['time_away'])
 
         if 'redirect_io' in merged_args:
@@ -820,10 +824,10 @@ class ArpMon(object):
         if 'pconf' in merged_args:
             _print_config = merged_args['pconf']
 
-        if 'time_sleep' in merged_args:
+        if 'time_sleep' in merged_args and merged_args['time_sleep'] is not None:
             self.time_sleep = int(merged_args['time_sleep'])
 
-        if 'time_recheck' in merged_args:
+        if 'time_recheck' in merged_args and merged_args['time_recheck'] is not None:
             self.time_recheck = int(merged_args['time_recheck'])
 
     #    if upload_config and self.config_file is None:
@@ -842,8 +846,8 @@ class ArpMon(object):
         if self.time_recheck is None:
             self.time_recheck = int(self.time_away/2) - 10
 
-        if self.time_var_refresh is None:
-            self.time_var_refresh = int(self.time_away * 4) + 10
+        # if self.time_var_refresh is None:
+        #     self.time_var_refresh = int(self.time_away * 4) + 10
 
         if self.sniff_timeout is None:
             self.sniff_timeout = SNIFF_TIMEOUT  # int(self.time_var_refresh / 3) + 10
@@ -980,7 +984,7 @@ def setup_io(am):
         print "time_sleep=\t{:>2}:{:0<2}".format(*divmod(am.time_sleep, 60))
         print "time_recheck=\t{:>2}:{:0<2}".format(*divmod(am.time_recheck, 60))
         print "time_away=\t{:>2}:{:0<2}".format(*divmod(am.time_away, 60))
-        print "var_refresh=\t{:>2}:{:0<2}".format(*divmod(am.time_var_refresh, 60))
+        # print "var_refresh=\t{:>2}:{:0<2}".format(*divmod(am.time_var_refresh, 60))
         print "sniff_timeout=\t{:>2}:{:0<2}".format(*divmod(am.sniff_timeout, 60))
         print "verbose=\t{}".format(_verbose), am.args['verbose']
         print "delta=\t{}".format(_delta)
