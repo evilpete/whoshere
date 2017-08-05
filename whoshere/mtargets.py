@@ -134,7 +134,7 @@ class Mtargets(object):
             send a arp request
         """
         if self._verbose > 1:
-            print "sendarpreq:", self.ip
+            print "sendarpreq:", self.ip, self.name
         if self.ip is not None:
             send(ARP(op=ARP.who_has, pdst=self.ip))
 
@@ -144,7 +144,7 @@ class Mtargets(object):
         """
         dst_ip = (self.ip or "255.255.255.255")
         if self._verbose > 1:
-            print "sendicmp: ", self.mac, dst_ip
+            print "sendicmp: ", self.mac, dst_ip, self.name
         send(IP(dst=dst_ip)/ICMP()/"whosthere")
 
     def get_dict(self):

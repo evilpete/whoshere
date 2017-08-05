@@ -48,32 +48,32 @@ body {
         status_data = jdata[0];
         targ_data = jdata.slice(1,);
 
-        // console.log("do_all targ_data :" + targ_data.length  + targ_data)
+        // console.log("do_all targ_data :" + targ_data.length  + targ_data);
 
         var dtime = Date.now() / 1000;
 
-        // console.log('do_all')
+        // console.log('do_all');
 
         if ( status_data.refresh_time ) {
             // if less the 20 min old
             data_age = dtime - status_data.time;
 
-            // console.log(data_age.toString() +  " < " + status_data.refresh_time.toString())
+            // console.log(data_age.toString() +  " < " + status_data.refresh_time.toString());
             if ( data_age  < status_data.refresh_time ) {
 
-                next_load = status_data.refresh_time - data_age
+                next_load = status_data.refresh_time - data_age;
 
                 // shouldn't happen but check anyway
                 if ( next_load > 0) {
                     setTimeout(function() {
                         location.reload();
-                        },next_load * 1000);
-                        // console.log('reload in ' + next_load.toString());
+                        }, (next_load + 30) * 1000);
+                        // console.log('reload in ' + next_load.toString() + " => " + ( dtime + status_data.refresh_time) );
                 }
 
             }
         }
-        do_report()
+        do_report();
     }
 
     //
@@ -97,14 +97,14 @@ body {
     sort_mac_rev = true;
     function sort_mac() {
         targ_data.sort(sort_by('mac', sort_mac_rev, lc));
-        if (sort_mac_rev) { sort_mac_rev = false } else { sort_mac_rev = true }
+        if (sort_mac_rev) { sort_mac_rev = false; } else { sort_mac_rev = true; }
         do_report()
     }
 
     sort_stat_rev = true;
     function sort_stat() {
         targ_data.sort(sort_by('stat', sort_stat_rev, parseInt));
-        if (sort_stat_rev) { sort_stat_rev = false } else { sort_stat_rev = true }
+        if (sort_stat_rev) { sort_stat_rev = false; } else { sort_stat_rev = true; }
         do_report()
     }
 
@@ -112,22 +112,22 @@ body {
     function sort_name() {
         // console.log('#sort_name ' + sort_name_rev);
         targ_data.sort(sort_by('name', sort_name_rev, lc));
-        if (sort_name_rev) { sort_name_rev = false } else { sort_name_rev = true }
+        if (sort_name_rev) { sort_name_rev = false; } else { sort_name_rev = true; }
         do_report()
     }
 
     sort_seen_rev = true;
     function sort_seen() {
         targ_data.sort(sort_by('last_seen', sort_seen_rev, parseInt));
-        if (sort_seen_rev) { sort_seen_rev = false } else { sort_seen_rev = true }
+        if (sort_seen_rev) { sort_seen_rev = false; } else { sort_seen_rev = true; }
         do_report()
     }
 
     sort_change_rev = true;
     function sort_change() {
         targ_data.sort(sort_by('last_change', sort_change_rev, parseInt));
-        if (sort_change_rev) { sort_change_rev = false } else { sort_change_rev = true }
-        do_report()
+        if (sort_change_rev) { sort_change_rev = false; } else { sort_change_rev = true; }
+        do_report();
     }
 
     //
@@ -138,9 +138,12 @@ body {
 
         var dtime = Date.now() / 1000;
 
-        /// console.log(targ_data)
+        data_age = dtime - status_data.time;
 
-        // console.log('do_report')
+        // console.log("do_report data_age:", Math.floor(data_age) + " : " + status_data.refresh_time);
+        // console.log(targ_data);
+
+        // console.log('do_report');
 
         if ( ! report_obj ) {
             report_obj = document.getElementById("report");
@@ -154,11 +157,11 @@ body {
 
 
         var date_color = "white";
-        if ( (dtime - status_data.time) > (status_data.refresh_time + 180) ) {
+        if ( (dtime - status_data.time) > (status_data.refresh_time + 90) ) {
             date_color = "orange";
         }
 
-        // console.log('t - s.t = ' +  dtime + ' - ' + status_data.time + ' = '  + (dtime - status_data.time) );
+        // console.log('do_report : ' + dtime + " : " + (status_data.time +  status_data.refresh_time) );
 
         var htmlrep = "<TABLE NAME='tb_0' ID='tb_0'>"
                 + "<TR><TH id=datestr style='color:" + date_color + ";' colspan='5' + title='" + head_title + "'>"
@@ -191,20 +194,24 @@ body {
             var last_seen_str = targ_data[pp].last_seen_str
             if ( Number(targ_data[pp].last_seen) < 1200) {
                 last_seen_str = "&nbsp;";
-                ccolor = "gray"
+                ccolor = "gray";
             }
 
-            var last_change_str = targ_data[pp].last_change_str
+            var last_change_str = targ_data[pp].last_change_str;
             if ( Number(targ_data[pp].last_change) == 0) {
-                last_change_str = "&nbsp;"
+                last_change_str = "&nbsp;";
             }
 
-            if (targ_data[pp].stat == "0" && (dtime - Number(targ_data[pp].last_change)) < 1200) {
-                ncolor = "yellow";
-            }
+            // if (targ_data[pp].stat == "1" && (dtime - Number(targ_data[pp].last_change)) < status_data.refresh_time) {
+            //     ncolor = "yellow";
+            // }
 
-            if ( (dtime - Number(targ_data[pp].last_change)) < 1200) {
-                ccolor = "orange";
+            if ( (dtime - Number(targ_data[pp].last_change)) < status_data.refresh_time) {
+                if (targ_data[pp].stat == "0") {
+                    ccolor = "orange";
+                } else {
+                    ccolor = "yellow";
+                }
             }
 
             htmlrep += "<TR>"
