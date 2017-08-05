@@ -559,11 +559,13 @@ class ArpMon(object):
         """
             Signal handler for clean exits
         """
-        print "Exiting in a Graceful way\nsig=", cursignal
+        if _verbose:
+            print "Exiting in a Graceful way\nsig=", cursignal
         if cursignal not in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT]:
             traceback.print_exc(file=sys.stdout)
 
-        print "Writing Status"
+        if _verbose:
+            print "Writing Status"
         self.write_status_json()
 
         if self.pid_dir:
@@ -571,7 +573,9 @@ class ArpMon(object):
             if os.path.isfile(pidpath):
                 os.remove(pidpath)
 
-        print "Flushing"
+        if _verbose:
+            print "Flushing"
+
         sys.stdout.flush()
         sys.stderr.flush()
         sys.exit(0)
@@ -618,7 +622,8 @@ class ArpMon(object):
         if jd is not None:
             # print "jd[0][time] =", (_start_time - jd[0]['time'])
             if (_start_time - jd[0]['time']) < 1200:
-                print >> sys.stdout, "PreLoading status_json"
+                if _verbose:
+                    print >> sys.stdout, "PreLoading status_json"
                 for d in jd:
                     if 'mac' in d:
                         m = d['mac']

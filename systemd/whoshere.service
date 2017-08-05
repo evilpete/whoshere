@@ -6,8 +6,10 @@ After=syslog.target network-online.target
 User=root
 Group=root
 
-PIDFile=/var/run/whoshere.pid
+PIDFile=/var/run/whoshere/whoshere.pid
 
+ExecStartPre=-mkdir -p /var/run/whoshere
+ExecStartPre=-mkdir -p /var/log/whoshere
 Type=simple
 ExecStart=/usr/local/bin/whoshere -r -v
 TimeoutStopSec=10
