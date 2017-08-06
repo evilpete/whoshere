@@ -1,3 +1,4 @@
+from __future__ import print_function    # (at top of module)
 import socket
 import time
 import struct
@@ -45,6 +46,7 @@ def get_brdaddr(ifname):
         Get broadcast for interface
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ifname = ifname.encode('utf-8')
     return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8919, struct.pack('256s', ifname))[20:24])
 
 
@@ -115,7 +117,7 @@ def normalize_mac(eaddr):
 #
 if __name__ == "__main__":
     import __main__
-    print __main__.__file__
+    print(__main__.__file__)
 
-    print "syntax ok"
+    print("syntax ok")
     exit(0)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import re
 import time
@@ -60,18 +61,18 @@ class Mtargets(object):
                 time_change = time_now - self.last_change
 
             if state > 0:
-                print "{}\t{} Last_seen   {:<16} :{:>2} {:3.2f} {:<12} : {:3.2f} {:<12}".format(
+                print("{}\t{} Last_seen   {:<16} :{:>2} {:3.2f} {:<12} : {:3.2f} {:<12}".format(
                     strtm, self.mac, self.name, state,
                     time_since, format_sec(time_since),
-                    time_change, format_sec(time_change))
+                    time_change, format_sec(time_change)))
 
             if self.is_active != state:
-                print "{}\t{} set_status  {:<16} :{:>2} ->{:>2} : {:<12} {:3.2f} {:3.2f}".format(
+                print("{}\t{} set_status  {:<16} :{:>2} ->{:>2} : {:<12} {:3.2f} {:3.2f}".format(
                     strtm, self.mac,
                     self.name,
                     self.is_active, state,
                     current_thread().name,
-                    time_since, time_change)
+                    time_since, time_change))
 
             sys.stdout.flush()
 
@@ -80,9 +81,9 @@ class Mtargets(object):
 
         if self.is_active != state:
             self.last_change = int(time_now)
-            # print "{}\t{} Set  Change {:<16} : active {} != state {}".format(
+            # print("{}\t{} Set  Change {:<16} : active {} != state {}".format(
             #        strtm, self.mac, self.name,
-            #        self.is_active, state)
+            #        self.is_active, state))
 
         self.is_active = state
 
@@ -102,7 +103,7 @@ class Mtargets(object):
             ans, unans = srp(Ether(dst=self.mac)/IP(dst=self.ip)/ICMP()/"whosthere", timeout=2)
 
         if self._verbose > 1:
-            print "icmp_ping: ", self.ip, " ans = ", len(ans), ", unans = ", len(unans)
+            print("icmp_ping: ", self.ip, " ans = ", len(ans), ", unans = ", len(unans))
             # sys.stdout.flush()
 
         return ans, unans
@@ -113,7 +114,7 @@ class Mtargets(object):
         ans, unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=self.ip),
                          timeout=1.5, retry=2)
         if self._verbose > 1:
-            print "arp_ping: ", self.ip, " ans = ", len(ans), ", unans = ", len(unans)
+            print("arp_ping: ", self.ip, " ans = ", len(ans), ", unans = ", len(unans))
             # sys.stdout.flush()
         return (ans, unans)
     # http://www.secdev.org/projects/scapy/doc/usage.html
@@ -126,7 +127,7 @@ class Mtargets(object):
             if self.linklocal is None:
                 self.linklocal = mac2ipv6(self.mac)
             if self._verbose > 1:
-                print "sendip6ping:", self.linklocal, self.name
+                print("sendip6ping:", self.linklocal, self.name)
             send(IPv6(dst=self.linklocal)/ICMPv6EchoRequest()/"whosthere")
 
     def sendarpreq(self):
@@ -134,7 +135,7 @@ class Mtargets(object):
             send a arp request
         """
         if self._verbose > 1:
-            print "sendarpreq:", self.ip, self.name
+            print("sendarpreq:", self.ip, self.name)
         if self.ip is not None:
             send(ARP(op=ARP.who_has, pdst=self.ip))
 
@@ -144,7 +145,7 @@ class Mtargets(object):
         """
         dst_ip = (self.ip or "255.255.255.255")
         if self._verbose > 1:
-            print "sendicmp: ", self.mac, dst_ip, self.name
+            print("sendicmp: ", self.mac, dst_ip, self.name)
         send(IP(dst=dst_ip)/ICMP()/"whosthere")
 
     def get_dict(self):
@@ -161,9 +162,9 @@ class Mtargets(object):
         return " ".join([self.mac, (self.ip or "0.0.0.0"), str(self.is_active)])
 
     def __repr__(self):
-        # print "__name__", self.__class__.__name__
-        # print "mac", self.mac
-        # print "id", id(self)
+        # print("__name__", self.__class__.__name__)
+        # print("mac", self.mac)
+        # print("id", id(self))
         # return "<{} [{}] at 0x{:x}>" % (self.__class__.__name__, self.mac, id(self))
         return "<{} [{}] at 0x{:x}>".format(self.__class__.__name__, self.mac, id(self))
 
@@ -174,7 +175,7 @@ class Mtargets(object):
 #
 if __name__ == "__main__":
     import __main__
-    print __main__.__file__
+    print(__main__.__file__)
 
-    print "syntax ok"
+    print("syntax ok")
     exit(0)
