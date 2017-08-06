@@ -526,11 +526,11 @@ class ArpMon(object):
 
         ddat = self.generate_status_list()
 
-        with open(self.stat_file + '.json', 'w+', 0) as fp:
+        with open(self.stat_file + '.json', 'w+') as fp:
             # fp.write('"astat":')
             json.dump(ddat, fp, sort_keys=True, indent=2)
 
-        with open(self.stat_file + '.js', 'w+', 0) as fp:
+        with open(self.stat_file + '.js', 'w+') as fp:
             fp.write('jdata = ')
             json.dump(ddat, fp, sort_keys=True, indent=2)
 

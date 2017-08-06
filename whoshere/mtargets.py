@@ -18,6 +18,8 @@ __all__ = ['Mtargets']
 class Mtargets(object):
     _verbose = 0
 
+    # __slots__ = ['mac', 'name', 'ip', 'last_change', 'last_seen', 'is_active', 'callback', 'callback_args', 'linklocal']
+
     def __init__(self, **kargs):
 
         self.mac = kargs.get('mac', None)
@@ -31,6 +33,7 @@ class Mtargets(object):
             self.ip = None
 
         self.name = kargs.get('name', self.mac[:-8])
+
 
         # 1262304000 - 2010/1/1
         self.last_change = 0
