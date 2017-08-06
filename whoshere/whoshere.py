@@ -166,7 +166,7 @@ class ArpMon(object):
         for c in self.mac_targets.values():
             print time.strftime(TIME_FMT, time.localtime()), \
                     "\t{:<18} {:<10} {:<16} = {:>2}\t{} {}".format(
-                        c.mac, c.ip, c.name, c.is_active,
+                        c.mac, (c.ip or "-"), c.name, c.is_active,
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_seen)),
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_change))
                         )
