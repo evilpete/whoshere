@@ -85,11 +85,14 @@ def upnp_probe():
 
 #    if iface_bcast_addr is None:
 #        iface_bcast_addr = get_brdaddr(ArpMon.iface)
-#    send(IP(dst=iface_bcast_addr) / UDP(sport=1900, dport=1900) / probe.format("ssdp:all"), loop=2, inter=0.3)
+#    send(IP(dst=iface_bcast_addr) / UDP(sport=1900, dport=1900) / \
+#            probe.format("ssdp:all"), loop=2, inter=0.3)
 #    time.sleep(.5)
-    send(IP(dst="239.255.255.250") / UDP(sport=1900, dport=1900) / probe.format(ST="ssdp:all", IP="239.255.255.250"))
+    send(IP(dst="239.255.255.250") / UDP(sport=1900, dport=1900) / \
+        probe.format(ST="ssdp:all", IP="239.255.255.250"))
     time.sleep(.5)
-    send(IPv6(dst="ff02::c") / UDP(sport=1900, dport=1900) / probe.format(ST="ssdp:all", IP="[ff02::c]"))
+    send(IPv6(dst="ff02::c") / UDP(sport=1900, dport=1900) / \
+        probe.format(ST="ssdp:all", IP="[ff02::c]"))
 
 
 def format_sec(total_seconds):

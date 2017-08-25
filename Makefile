@@ -15,7 +15,9 @@ PEP8=pep8
 PYLINT=pylint
 
 FILES=whoshere/whoshere.py whoshere/whoshere_main.py whoshere/__init__.py \
-        whoshere/utils.py whoshere/mtargets.py whoshere/webhandler.py whoshere-isy.py
+        whoshere/utils.py whoshere/mtargets.py whoshere/webhandler.py
+EXTRAS=whoshere-isy/whoshere-isy.py whoshere-iftt/whoshere-iftt.py
+# whoshere-grunt/whoshere-grunt.py
 BINFILES=
 PYTHON=/usr/local/bin/python
 
@@ -23,6 +25,11 @@ all: syntax lint
 
 syntax:
 	for targ in ${FILES} ; do \
+            echo $$targ ; \
+	    ${PYTHON} -m py_compile $$targ ; \
+	done
+	for targ in ${EXTRAS} ; do \
+            echo $$targ ; \
 	    ${PYTHON} -m py_compile $$targ ; \
 	done
 

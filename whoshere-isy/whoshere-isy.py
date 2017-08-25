@@ -18,7 +18,7 @@ import time
 from whoshere import ArpMon, setup_io, validate_config
 
 import ISY
-from ISY.IsyExceptionClass import IsySoapError
+from ISY.IsyExceptionClass import IsySoapError, IsyResponseError
 # from ISY import IsyVar
 
 __author__ = "Peter Shipley"
@@ -135,9 +135,15 @@ def isy_callback(s, v):
 #        last_reload = time_now
 #        print("isy_callback : load_vars")
 
-    if v.value != s:
-        # print("isy_callback", v.name, v.value, "==>", s)
-        v.value = s
+    try:
+        if v.value != s:
+            # print("isy_callback", v.name, v.value, "==>", s)
+            v.value = s
+    except IsyResponseError as isyerr:
+        print("IsyResponseError", isyerr)
+    # except IOError as ioerr:
+        # print("IOError", isyerr)
+
 
 
 def add_var_callbacks(am, isy):
@@ -184,6 +190,10 @@ if __name__ == '__main__':
 
     myisy = ISY.Isy(parsearg=1, eventupdates=0, faststart=1)  # debug=0x223)
 
+    # preload var info from ISY controller
+    myisy.load_vars()
+    last_reload = int(time.time())
+
     conf_dat = download_conf(ISY_CONF_PATH)
     if verbose > 1:
         print("download_conf(ISY_CONF_PATH)", conf_dat)
@@ -212,13 +222,7 @@ if __name__ == '__main__':
     if verbose:
         print("arpmon.args :", type(arpmon.args))
 
-
-    # preload var info from ISY controller
-    myisy.load_vars()
-    last_reload = int(time.time())
-
     arpmon.load_targets(target_dat=targ_dat)
-
 
     if verbose > 1:
         print("arpmon.redirect_io", arpmon.redirect_io)

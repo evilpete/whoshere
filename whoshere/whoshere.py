@@ -34,13 +34,13 @@ import json
 import logging
 # import socket
 # import StringIO
-import io
 
 from configparser import SafeConfigParser as ConfigParser
 
 from threading import Thread, current_thread
 # from BaseHTTPServer import HTTPServer
-from http.server import BaseHTTPRequestHandler, HTTPServer
+# from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import HTTPServer
 
 
 # import scapy.all
@@ -553,8 +553,8 @@ class ArpMon(object):
             # pprint.pprint(jdata)
             return jdata
         except Exception as err:
-            traceback = sys.exc_info()[2]
-            print("load_status_json err:", err, "\n", traceback)
+            mytraceback = sys.exc_info()[2]
+            print("load_status_json err:", err, "\n", mytraceback)
             raise
         if _verbose:
             print("load_status_json None")
@@ -757,8 +757,8 @@ class ArpMon(object):
 
         if ini.has_section('whoshere'):
             return ini.items('whoshere')
-        else:
-            return {}
+        
+        return {}
 
     def parse_args(self, config_file=None, config_dat=None):
         """
@@ -948,16 +948,31 @@ def setup_io(am):
 #    signal.signal(signal.SIGUSR1, sig_print_status)
 #    signal.signal(signal.SIGUSR2, am._sig_refresh_statfile)
     if am.verbose:
-        print("init")
+        print("init", sys.hexversion, WHOSHERE_VER)
         print("setup_io : redirect_io : ", am.redirect_io)
         print("setup_io : log_dir : ", am.log_dir)
         print("setup_io : pid_dir : ", am.pid_dir)
 
     if am.redirect_io:
+#        if not os.path.lexists(am.log_dir):
+#            os.mkdir(am.log_dir, 0o775)
+
+        # DATE_FMT = "%Y%m%d%H%M"
+        data_stamp = time.strftime("%Y%m%d%H%M", time.localtime())
+        # print("Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time)))
 
         logpath = am.log_dir + "/whoshere.log"
-        if os.path.isfile(logpath):
-            os.rename(logpath, logpath + '-prev')
+        # print("logpath", type(logpath))
+        newf = logpath + '-' + data_stamp
+        newp = logpath + '-prev'
+        if os.path.lexists(logpath):
+            # print("os.rename", logpath, newf)
+            os.rename(logpath, newf)
+            if os.path.lexists(newp):
+                # print("os.unlink", newp)
+                os.unlink(newp)
+            # print("os.symlink", newf, newp)
+            os.symlink(newf, newp)
 #        sys.stdout = open(logpath, 'w+', 0)
         mewout = os.open(logpath, os.O_WRONLY | os.O_CREAT, 0o644)
         sys.stdout.flush()
@@ -966,8 +981,13 @@ def setup_io(am):
         # sys.stdout = os.fdopen(1, 'w')
 
         logpath = am.log_dir + "/whoshere.err"
+        newf = logpath + '-' + data_stamp
+        newp = logpath + '-prev'
         if os.path.isfile(logpath):
-            os.rename(logpath, logpath + '-prev')
+            os.rename(logpath, newf)
+            if os.path.lexists(newp):
+                os.unlink(newp)
+            os.symlink(newf, newp)
 #        sys.stderr = open(logpath, 'w+', 0)
         mewerr = os.open(logpath, os.O_WRONLY | os.O_CREAT, 0o644)
         sys.stderr.flush()
@@ -990,12 +1010,16 @@ def setup_io(am):
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     if am.pid_dir:
+#        if not os.path.lexists(am.pid_dir):
+#            os.mkdir(am.pid_dir, 0o775)
         pidpath = am.pid_dir + "/whoshere.pid"
+        if os.path.lexists(pidpath):
+            os.unlink(pidpath)
         with open(pidpath, 'w', 0o644) as f:
             f.write("{}\n".format(os.getpid()))
 
     if am.verbose:
-        print("Starting: {}\tpid={}".format(time.strftime(TIME_FMT, time.localtime()), os.getpid()))
+        print("Starting: {}\tpid={}\tver={}".format(time.strftime(TIME_FMT, time.localtime()), os.getpid(), WHOSHERE_VER))
         print("time_sleep=\t{:>2}:{:0<2}".format(*divmod(am.time_sleep, 60)))
         print("time_recheck=\t{:>2}:{:0<2}".format(*divmod(am.time_recheck, 60)))
         print("time_away=\t{:>2}:{:0<2}".format(*divmod(am.time_away, 60)))
