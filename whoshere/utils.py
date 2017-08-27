@@ -1,3 +1,4 @@
+from __future__ import print_function    # (at top of module)
 import socket
 import time
 import struct
@@ -45,6 +46,7 @@ def get_brdaddr(ifname):
         Get broadcast for interface
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ifname = ifname.encode('utf-8')
     return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8919, struct.pack('256s', ifname))[20:24])
 
 
@@ -83,11 +85,14 @@ def upnp_probe():
 
 #    if iface_bcast_addr is None:
 #        iface_bcast_addr = get_brdaddr(ArpMon.iface)
-#    send(IP(dst=iface_bcast_addr) / UDP(sport=1900, dport=1900) / probe.format("ssdp:all"), loop=2, inter=0.3)
+#    send(IP(dst=iface_bcast_addr) / UDP(sport=1900, dport=1900) / \
+#            probe.format("ssdp:all"), loop=2, inter=0.3)
 #    time.sleep(.5)
-    send(IP(dst="239.255.255.250") / UDP(sport=1900, dport=1900) / probe.format(ST="ssdp:all", IP="239.255.255.250"))
+    send(IP(dst="239.255.255.250") / UDP(sport=1900, dport=1900) / \
+        probe.format(ST="ssdp:all", IP="239.255.255.250"))
     time.sleep(.5)
-    send(IPv6(dst="ff02::c") / UDP(sport=1900, dport=1900) / probe.format(ST="ssdp:all", IP="[ff02::c]"))
+    send(IPv6(dst="ff02::c") / UDP(sport=1900, dport=1900) / \
+        probe.format(ST="ssdp:all", IP="[ff02::c]"))
 
 
 def format_sec(total_seconds):
@@ -115,7 +120,7 @@ def normalize_mac(eaddr):
 #
 if __name__ == "__main__":
     import __main__
-    print __main__.__file__
+    print(__main__.__file__)
 
-    print "syntax ok"
+    print("syntax ok")
     exit(0)

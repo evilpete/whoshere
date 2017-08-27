@@ -2,6 +2,7 @@
 
 TIME_FMT = "%Y-%m-%d %H:%M:%S" 
 
+WHOSHERE_VER = "0.1.20170824"
 STAT_FILE = "/var/www/whoshere-status"
 WWW_PATH = "/var/www"
 LOG_DIR = "/var/log/whoshere"

@@ -7,6 +7,7 @@
 # p ylint: disable=global-statement,protected-access,invalid-name,missing-docstring,broad-except,too-many-branches,no-name-in-module
 
 
+from __future__ import print_function
 # import sys
 # import os
 import argparse
@@ -17,7 +18,7 @@ import time
 from whoshere import ArpMon, setup_io, validate_config
 
 import ISY
-from ISY.IsyExceptionClass import IsySoapError
+from ISY.IsyExceptionClass import IsySoapError, IsyResponseError
 # from ISY import IsyVar
 
 __author__ = "Peter Shipley"
@@ -56,41 +57,41 @@ def isy_upload_conf(cur_file, isy_path):
     """
 
     # cur_targ_data = None
-    print "Config file = {}".format(cur_file)
-    print "ISY parh = {}".format(isy_path)
+    print("Config file = {}".format(cur_file))
+    print("ISY parh = {}".format(isy_path))
     with open(cur_file) as confd:
         try:
             cur_data = confd.read()
             # target_data = json.loads(cur_data)
-        except Exception, err:
-            print "json error: ", err
-            print cur_data
-            print "File not uploaded"
+        except Exception as err:
+            print("json error: ", err)
+            print(cur_data)
+            print("File not uploaded")
             exit(1)
 
     if cur_file.endswith(".json"):
         try:
             target_data = json.loads(cur_data)
             validate_config(target_data)
-        except Exception, err:
-            print "Config Error"
-            print err
+        except Exception as err:
+            print("Config Error")
+            print(err)
             exit(1)
         else:
             if verbose:
-                print "Config Valid"
+                print("Config Valid")
 
     try:
         myisy._sendfile(data=cur_data, filename=isy_path)
-    except IsySoapError, se:
+    except IsySoapError as se:
         if se.code() == 403:
-            print "Error uploading {0} : Forbidden ( code=403 )".format(isy_path)
+            print("Error uploading {0} : Forbidden ( code=403 )".format(isy_path))
 
         raise
 
     else:
-        print "Uploaded filename:", isy_path
-        print "Uploaded data:\n", cur_data
+        print("Uploaded filename:", isy_path)
+        print("Uploaded data:\n", cur_data)
 
 
 def download_conf(config_path=None):
@@ -107,70 +108,76 @@ def download_conf(config_path=None):
     try:
         conf_data = myisy.soapcomm("GetSysConf", name=config_path)
         if verbose:
-            print "Downloaded config_file:", myisy.addr, config_path
+            print("Downloaded config_file:", myisy.addr, config_path)
         return conf_data
-    except ValueError, ve:
-        print "Load Error :", ve
-        print conf_data
+    except ValueError as ve:
+        print("Load Error :", ve)
+        print(conf_data)
         raise
-    except IsySoapError, se:
+    except IsySoapError as se:
         if config_path.startswith('/WEB/CONF/'):
-            print "Downloaded dat:", conf_data
-            print "Config file not found of ISY: addr={} path={}".format(myisy.addr, config_path)
-            print "Not IsySoapError :", se
+            print("Downloaded dat:", conf_data)
+            print("Config file not found of ISY: addr={} path={}".format(myisy.addr, config_path))
+            print("Not IsySoapError :", se)
         else:
-            print "IsySoapError :", se
+            print("IsySoapError :", se)
         return None
 
 
 def isy_callback(s, v):
     # pylint: disable=unused-argument
-    # print "isy_callback", (s, v), v.name
+    # print("isy_callback", (s, v), v.name)
 
     # 3 h = 10800 sec
 #    time_now = int(time.time())
 #    if (time_now - last_reload) > 10800:
 #        v.isy.load_vars()
 #        last_reload = time_now
-#        print "isy_callback : load_vars"
+#        print("isy_callback : load_vars")
 
-    if v.value != s:
-        # print "isy_callback", v.name, v.value, "==>", s
-        v.value = s
+    try:
+        if v.value != s:
+            # print("isy_callback", v.name, v.value, "==>", s)
+            v.value = s
+    except IsyResponseError as isyerr:
+        print("IsyResponseError", isyerr)
+    # except IOError as ioerr:
+        # print("IOError", isyerr)
+
 
 
 def add_var_callbacks(am, isy):
 
-    print "add_var_callbacks", (am, isy)
-    print "verbose =", verbose
+    print("add_var_callbacks", (am, isy))
+    print("verbose =", verbose)
     for c in am.mac_targets.values():
         var_id = isy._var_get_id(c.name)
         if var_id is not None:
             isy_var = isy.get_var(var_id)
             if am.verbose:
-                print "adding callback for", c.name, "var =", var_id, isy_var.status
+                print("adding callback for", c.name, "var =", var_id, isy_var.status)
             c.add_callback(isy_callback, isy_var)
 
 
 def do_uploads(am):
 
     if am.verbose:
-        print "do_uploads"
+        print("do_uploads")
 
     if 'upload_config' in am.args and am.args['upload_config']:
         if 'config_file' in am.args and am.args['config_file']:
-            print "isy_upload_conf(", am.config_file, ",", ISY_CONF_PATH, ")"
+            print("isy_upload_conf(", am.config_file, ",", ISY_CONF_PATH, ")")
             isy_upload_conf(am.config_file, ISY_CONF_PATH)
         else:
-            print "Config file must be specified with uploading config data"
+            print("Config file must be specified with uploading config data")
         exit(0)
 
     if 'upload_targets' in am.args and am.args['upload_targets']:
         if 'target_file' in am.args and am.args['target_file']:
-            print "isy_upload_conf(", am.target_file, ",", ISY_TARG_PATH, ")"
+            print("isy_upload_conf(", am.target_file, ",", ISY_TARG_PATH, ")")
             isy_upload_conf(am.target_file, ISY_TARG_PATH)
         else:
-            print "Target file must be specified with uploading config data"
+            print("Target file must be specified with uploading config data")
         exit(0)
 
 last_reload = 0
@@ -183,9 +190,13 @@ if __name__ == '__main__':
 
     myisy = ISY.Isy(parsearg=1, eventupdates=0, faststart=1)  # debug=0x223)
 
+    # preload var info from ISY controller
+    myisy.load_vars()
+    last_reload = int(time.time())
+
     conf_dat = download_conf(ISY_CONF_PATH)
     if verbose > 1:
-        print "download_conf(ISY_CONF_PATH)", conf_dat
+        print("download_conf(ISY_CONF_PATH)", conf_dat)
     # if conf_dat is not None:
     #    fp = io.BytesIO(conf_dat)
 
@@ -198,29 +209,23 @@ if __name__ == '__main__':
     # if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
     if arpmon.args.get('upload_config') or arpmon.args.get('upload_targets'):
         if verbose:
-            print "arpmon.args", arpmon.args
-            print "... do upload"
+            print("arpmon.args", arpmon.args)
+            print("... do upload")
         do_uploads(arpmon)
         exit(0)
 
     targ_dat = download_conf(ISY_TARG_PATH)
     # upload_config = False
     if verbose > 1:
-        print "downloaded targ config :", targ_dat
+        print("downloaded targ config :", targ_dat)
 
     if verbose:
-        print "arpmon.args :", type(arpmon.args)
-
-
-    # preload var info from ISY controller
-    myisy.load_vars()
-    last_reload = int(time.time())
+        print("arpmon.args :", type(arpmon.args))
 
     arpmon.load_targets(target_dat=targ_dat)
 
-
     if verbose > 1:
-        print "arpmon.redirect_io", arpmon.redirect_io
+        print("arpmon.redirect_io", arpmon.redirect_io)
 
     setup_io(arpmon)
 

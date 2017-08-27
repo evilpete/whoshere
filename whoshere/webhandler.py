@@ -1,5 +1,7 @@
 
-from BaseHTTPServer import BaseHTTPRequestHandler
+from __future__ import print_function
+#from BaseHTTPServer import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import select
 import time
 import json
@@ -21,7 +23,7 @@ class webHandler(BaseHTTPRequestHandler):
 
     def log_message(self, lformat, *args):
         t = time.strftime(TIME_FMT, time.localtime())
-        print "{}\t{} {}\t{}".format(t, "HTTPRequest", self.client_address[0], lformat%args)
+        print("{}\t{} {}\t{}".format(t, "HTTPRequest", self.client_address[0], lformat%args))
 
     def do_HEAD(self):
         if self.path.startswith("/whoshere-status."):
@@ -76,7 +78,7 @@ class webHandler(BaseHTTPRequestHandler):
                 # else:
                 self.wfile.write(jdata)
 
-        except select.error, se:
+        except select.error as se:
             self.send_error(503, 'Service Unavailable')
 
 #    def log_message(self, format, *args):
@@ -91,7 +93,7 @@ class webHandler(BaseHTTPRequestHandler):
 #
 if __name__ == "__main__":
     import __main__
-    print __main__.__file__
+    print(__main__.__file__)
 
-    print "syntax ok"
+    print("syntax ok")
     exit(0)

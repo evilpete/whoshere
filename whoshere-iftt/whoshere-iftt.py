@@ -4,6 +4,7 @@
     is a example program that can me used to trigger IFTT via webhooks
 """
 
+from __future__ import print_function
 import requests
 from whoshere import ArpMon, setup_io
 
@@ -20,8 +21,8 @@ def post_data(url, dat, ti=10):
     """
     try:
         requests.post(url, data=dat, timeout=ti)
-    except requests.exceptions.Timeout, re:
-        print "Post Error:", re
+    except requests.exceptions.Timeout as re:
+        print("Post Error:", re)
         raise
 
 
@@ -33,7 +34,7 @@ def iftt_callback(s, v=None):
     # should never happen
     if v is None:
         if _debug:
-            print "iftt_callback: WARNING:", s, v
+            print("iftt_callback: WARNING:", s, v)
         return
 
     report_vals = {
@@ -44,7 +45,7 @@ def iftt_callback(s, v=None):
 
     if v['cur_val'] != s:
         if _debug:
-            print "iftt_callback:", v['id'], v['cur_val'], "==>", s
+            print("iftt_callback:", v['id'], v['cur_val'], "==>", s)
 
         # skip startup alerts
         # if v['cur_val'] != -1:
@@ -54,7 +55,7 @@ def iftt_callback(s, v=None):
         v['cur_val'] = s
     else:
         if _debug:
-            print "iftt_callback: SKIP:", v['id'], v['cur_val'], "==>", s
+            print("iftt_callback: SKIP:", v['id'], v['cur_val'], "==>", s)
 
 
 def add_callbacks(am, ifttkey, ifttevent):
@@ -62,7 +63,7 @@ def add_callbacks(am, ifttkey, ifttevent):
         loop through all targets and add a IFTT callback
     """
     if _debug:
-        print "add_var_callbacks", am
+        print("add_callbacks", am)
 
     xurl = IFTT_URL.format(ifttevent, ifttkey)
     for c in am.mac_targets.values():

@@ -21,6 +21,8 @@
 
 # pylint: disable=global-statement,protected-access,invalid-name,missing-docstring,broad-except,too-many-branches,no-name-in-module
 
+from __future__ import print_function
+import io
 import select
 import sys
 import os
@@ -32,11 +34,14 @@ import json
 import logging
 # import socket
 # import StringIO
-import io
-from ConfigParser import SafeConfigParser as ConfigParser
+
+from configparser import SafeConfigParser as ConfigParser
 
 from threading import Thread, current_thread
-from BaseHTTPServer import HTTPServer
+# from BaseHTTPServer import HTTPServer
+# from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import HTTPServer
+
 
 # import scapy.all
 from scapy.all import sniff, conf as _scapy_conf, Ether, ARP, IP, Dot3
@@ -157,19 +162,20 @@ class ArpMon(object):
         if isinstance(mtarg, Mtargets):
             self.mac_targets[mtarg.mac] = mtarg
             if _debug:
-                print "adding target", mtarg.name
+                print("adding target", mtarg.name)
 #            else:
-#                print "NOT adding target"
+#                print("NOT adding target")
 
     def print_status_all(self):
-        # print "Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time))
+        # print("Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time)))
         for c in self.mac_targets.values():
-            print time.strftime(TIME_FMT, time.localtime()), \
+            # print(c.mac, c.ip, c.name, c.is_active, c.last_seen, c.last_change)
+            print(time.strftime(TIME_FMT, time.localtime()), \
                     "\t{:<18} {:<10} {:<16} = {:>2}\t{} {}".format(
-                        c.mac, c.ip, c.name, c.is_active,
+                        c.mac, (c.ip or "-"), c.name, c.is_active,
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_seen)),
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_change))
-                        )
+                        ))
         sys.stdout.flush()
         return 0
 
@@ -180,7 +186,7 @@ class ArpMon(object):
         pcap_filter = "ether src {}".format(" or ".join(self.mac_targets.keys()))
 
         if _debug:
-            print "pcap_filter=", pcap_filter
+            print("pcap_filter=", pcap_filter)
 
         while True:
             # tcpdump -i em0 -v -v ether src 60:be:b5:ad:28:2d
@@ -188,17 +194,17 @@ class ArpMon(object):
                 sniff(prn=self._pcap_callback, iface=self.iface,
                       filter=pcap_filter, store=0,
                       timeout=self.sniff_timeout)
-            except select.error, se:
-                # print "scapy sniff : select.error", se
+            except select.error as se:
+                # print("scapy sniff : select.error", se)
                 continue
 
             # time_now = int(time.time())
 
             if _verbose > 1:
-                print time.strftime(TIME_FMT, time.localtime()), "\tsniff loop timeout"
+                print(time.strftime(TIME_FMT, time.localtime()), "\tsniff loop timeout")
 
 #            if not self.ping_thread.is_alive():
-#                print time.strftime(TIME_FMT, time.localtime()), "\tping thread died", self.ping_thread
+#                print(time.strftime(TIME_FMT, time.localtime()), "\tping thread died", self.ping_thread)
 #                break
 
             time_now = int(time.time())
@@ -253,17 +259,17 @@ class ArpMon(object):
                     self.mac_targets[eaddr].ip = ipaddr
                     t = time.strftime(TIME_FMT, time.localtime())
                     if _verbose > 1 or _debug:
-                        print "{}\t{} set_ipaddr  {:<16} : {}".format(
+                        print("{}\t{} set_ipaddr  {:<16} : {}".format(
                             t, self.mac_targets[eaddr].mac, self.mac_targets[eaddr].name,
-                            self.mac_targets[eaddr].ip)
+                            self.mac_targets[eaddr].ip))
 
                 elif self.mac_targets[eaddr].ip != self.mac_targets[eaddr].ip:
                     self.mac_targets[eaddr].ip = ipaddr
                     t = time.strftime(TIME_FMT, time.localtime())
                     if self.verbose > 1 or _debug:
-                        print "{}\t{} new_ipaddr  {:<16} : {} -> {}".format(
+                        print("{}\t{} new_ipaddr  {:<16} : {} -> {}".format(
                             t, self.mac_targets[eaddr].mac, self.mac_targets[eaddr].name,
-                            self.mac_targets[eaddr].ip, ipaddr)
+                            self.mac_targets[eaddr].ip, ipaddr))
 
         return None
 
@@ -271,14 +277,14 @@ class ArpMon(object):
         self.start_pingloop()
 
         if _verbose:
-            print time.strftime(TIME_FMT, time.localtime()), "pre sleep", current_thread().name
+            print(time.strftime(TIME_FMT, time.localtime()), "pre sleep", current_thread().name)
             sys.stdout.flush()
 
         sys.stdout.flush()
 
         self.start_sniffloop()
 
-        if isinstance(self.http_port, (int, long)) and self.http_port > 1:
+        if isinstance(self.http_port, (int)) and self.http_port > 1:
             self.start_http()
 
         # self.sniff_loop()
@@ -288,8 +294,8 @@ class ArpMon(object):
         self.sniff_thread.daemon = True
         self.sniff_thread.start()
         if self.verbose > 1:
-            print time.strftime(TIME_FMT, time.localtime()), "\tstart_sniffloop() sniff_thread:", self.sniff_thread.name, current_thread().name
-            # print time.strftime(TIME_FMT, time.localtime()), "\t", current_thread().name, "sniff loop"
+            print(time.strftime(TIME_FMT, time.localtime()), "\tstart_sniffloop() sniff_thread:", self.sniff_thread.name, current_thread().name)
+            # print(time.strftime(TIME_FMT, time.localtime()), "\t", current_thread().name, "sniff loop")
 
     def start_pingloop(self):
 
@@ -297,9 +303,9 @@ class ArpMon(object):
         self.ping_thread.daemon = True
         self.ping_thread.start()
         if self.verbose > 1:
-            print time.strftime(TIME_FMT, time.localtime()), \
+            print(time.strftime(TIME_FMT, time.localtime()), \
                      "\tstart_pingloop() ping_thread:", \
-                      self.ping_thread.name, current_thread().name
+                      self.ping_thread.name, current_thread().name)
 
     def start_http(self):
 
@@ -309,9 +315,9 @@ class ArpMon(object):
         self.http_thread.daemon = True
         self.http_thread.start()
         if self.verbose > 1:
-            print time.strftime(TIME_FMT, time.localtime()), \
+            print(time.strftime(TIME_FMT, time.localtime()), \
                   "\tstart_server() http_server:", \
-                  self.http_thread.name, current_thread().name
+                  self.http_thread.name, current_thread().name)
 
     def http_server(self, am):
 
@@ -319,7 +325,7 @@ class ArpMon(object):
 
         server = HTTPServer(('', self.http_port), webHandler)
         if self.verbose:
-            print 'Started httpserver on port ', self.http_port
+            print('Started httpserver on port ', self.http_port)
         server.serve_forever()
 
     def watch_threads(self):
@@ -329,20 +335,20 @@ class ArpMon(object):
         while True:
 
             time.sleep(self.time_sleep)
-            time_now = time.time()
+            time_now = int(time.time())
 
             if self.ping_thread is not None and not self.ping_thread.is_alive():
-                print time.strftime(TIME_FMT, time.localtime()), "\tping thread died", self.ping_thread
+                print(time.strftime(TIME_FMT, time.localtime()), "\tping thread died", self.ping_thread)
                 # self.start_pingloop()
                 break
 
             if self.sniff_thread is not None and not self.sniff_thread.is_alive():
-                print time.strftime(TIME_FMT, time.localtime()), "\tsniff_thread thread died", self.sniff_thread
+                print(time.strftime(TIME_FMT, time.localtime()), "\tsniff_thread thread died", self.sniff_thread)
                 # self.start_sniffloop():
                 break
 
             if self.http_thread is not None and not self.http_thread.is_alive():
-                print time.strftime(TIME_FMT, time.localtime()), "\thttp_thread thread died", self.http_thread
+                print(time.strftime(TIME_FMT, time.localtime()), "\thttp_thread thread died", self.http_thread)
                 # self.start_http()
                 break
 
@@ -354,8 +360,8 @@ class ArpMon(object):
 
             if ((time_now >= (self.last_write + self.sniff_timeout)) or self.do_stat_write):
                 if _verbose > 1  or _debug:
-                    print time.strftime(TIME_FMT, time.localtime()), "\twatch_threads :", \
-                        (time_now - (self.last_write + self.sniff_timeout)), self.do_stat_write
+                    print(time.strftime(TIME_FMT, time.localtime()), "\twatch_threads :", \
+                        (time_now - (self.last_write + self.sniff_timeout)), self.do_stat_write)
                 self.write_status_json()
                 self.last_write = time_now
                 self.do_stat_write = False
@@ -381,11 +387,11 @@ class ArpMon(object):
         time.sleep(5)
 
         if _verbose > 1:
-            print time.strftime(TIME_FMT, time.localtime()), "\tping_loop init", current_thread().name
+            print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop init", current_thread().name)
             sys.stdout.flush()
 
         if _debug:
-            print "self pre"
+            print("self pre")
 
         time_now = float(time.time())  # int(time.time())
 
@@ -393,22 +399,22 @@ class ArpMon(object):
 
         # a couple quick one time broadcasts
         if _verbose > 1:
-            print "upnp_probe"
+            print("upnp_probe")
         upnp_probe()
         time.sleep(.30)
 
         if _verbose > 1:
-            print "ping bcast"
+            print("ping bcast")
         bcast_icmp(self.iface)
         time.sleep(.30)
 
         if _verbose > 1:
-            print "ping6 bcast"
+            print("ping6 bcast")
         bcast_icmp6()
         time.sleep(.30)
 
         if _debug:
-            print "ping each"
+            print("ping each")
         for c in self.mac_targets.values():
 
             if c.last_seen > time_now:
@@ -424,7 +430,7 @@ class ArpMon(object):
             time.sleep(.10)
 
         if _debug:
-            print "post"
+            print("post")
 
         self.print_status_all()
 
@@ -433,7 +439,7 @@ class ArpMon(object):
         self.do_stat_write = False
 
         if _verbose > 1:
-            print time.strftime(TIME_FMT, time.localtime()), "\tping_loop start"
+            print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop start")
 
         while True:
 
@@ -461,10 +467,10 @@ class ArpMon(object):
 
                 if time_since >= self.time_away:
                     if _verbose > 1 and c.ip is None:
-                        print "{}\tping_loop: time_since >= time_away, last_seen = {}".format(
+                        print("{}\tping_loop: time_since >= time_away, last_seen = {}".format(
                             strtm,
-                            time.strftime(TIME_FMT, time.localtime(c.last_seen)))
-                        print strtm, "\t", c.mac, c.ip, c.name
+                            time.strftime(TIME_FMT, time.localtime(c.last_seen))))
+                        print(strtm, "\t", c.mac, c.ip, c.name)
 
                     # set inital last_seen to start file of prog
                     # if c.is_active == -1:
@@ -483,18 +489,18 @@ class ArpMon(object):
 
 
 # pcap_filter = "arp and ether src 60:be:b5:ad:28:2d"
-# print time.asctime(time.localtime())
+# print(time.asctime(time.localtime()))
 
     def write_status_json(self):
-        print "{}\t{} stat_file   {:<16}".format(
+        print("{}\t{} stat_file   {:<16}".format(
             str(time.strftime(TIME_FMT, time.localtime())),
             "xx:xx:xx:xx:xx:xx",
-            self.stat_file)
+            self.stat_file))
         self.write_status_list_json()
 
     def generate_status_list(self):
 
-        # print "Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time))
+        # print("Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time)))
         ret = []
 
         time_now = time.time()
@@ -520,11 +526,11 @@ class ArpMon(object):
 
         ddat = self.generate_status_list()
 
-        with open(self.stat_file + '.json', 'w+', 0) as fp:
+        with open(self.stat_file + '.json', 'w+') as fp:
             # fp.write('"astat":')
             json.dump(ddat, fp, sort_keys=True, indent=2)
 
-        with open(self.stat_file + '.js', 'w+', 0) as fp:
+        with open(self.stat_file + '.js', 'w+') as fp:
             fp.write('jdata = ')
             json.dump(ddat, fp, sort_keys=True, indent=2)
 
@@ -534,20 +540,24 @@ class ArpMon(object):
         jdata = None
         jsonfile = self.stat_file + '.json'
         if _verbose:
-            print "load_status_json", jsonfile
+            print("load_status_json", jsonfile)
         # import pprint
         try:
             if os.path.isfile(jsonfile):
-                with open(jsonfile, 'r', 0) as fp:
+                with io.open(jsonfile, 'r') as fp:
                     if _verbose:
-                        print "load_status_json: reading", jsonfile, len(jdata)
+                        print("load_status_json: reading", jsonfile)
                     jdata = json.load(fp, parse_int=int, parse_float=float)
+                    if _verbose:
+                        print("load_status_json: len", len(jdata))
             # pprint.pprint(jdata)
             return jdata
-        except Exception, err:
-            print "load_status_json err:", err
+        except Exception as err:
+            mytraceback = sys.exc_info()[2]
+            print("load_status_json err:", err, "\n", mytraceback)
+            raise
         if _verbose:
-            print "load_status_json None"
+            print("load_status_json None")
         return None
 
     def _sig_refresh_statfile(self, cursignal, frame):
@@ -560,12 +570,12 @@ class ArpMon(object):
             Signal handler for clean exits
         """
         if _verbose:
-            print "Exiting in a Graceful way\nsig=", cursignal
+            print("Exiting in a Graceful way\nsig=", cursignal)
         if cursignal not in [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT]:
             traceback.print_exc(file=sys.stdout)
 
         if _verbose:
-            print "Writing Status"
+            print("Writing Status")
         self.write_status_json()
 
         if self.pid_dir:
@@ -574,7 +584,7 @@ class ArpMon(object):
                 os.remove(pidpath)
 
         if _verbose:
-            print "Flushing"
+            print("Flushing")
 
         sys.stdout.flush()
         sys.stderr.flush()
@@ -583,7 +593,7 @@ class ArpMon(object):
     def load_targets(self, target_dat=None):
 
         if _debug:
-            print "run load_targets()"
+            print("run load_targets()")
 
         if target_dat is None:
             self.target_data = self.get_target_dat()
@@ -591,10 +601,10 @@ class ArpMon(object):
             self.target_data = target_dat
 
         if _verbose > 1:
-            print "target_data:", self.target_data
+            print("target_data:", self.target_data)
 
         if _print_config is not None:
-            print self.target_data
+            print(self.target_data)
             exit(0)
 
         target_list = json.loads(self.target_data)
@@ -608,22 +618,22 @@ class ArpMon(object):
                     mt = self.mac_targets[tp[1]] = Mtargets(mac=tp[1], ip=tp[0], name=tp[2])
                     self.add_target(mt)
 
-                except Exception, err:
-                    print >> sys.stderr, "Bad target:", tp, err
+                except Exception as err:
+                    print("Bad target:", tp, err) # sys.stderr
                     raise
 
             else:
-                print >> sys.stderr, "unknown mac :", tp
+                print("unknown mac :", tp) # sys.stderr
 
         #
         # Preload from Json status file
         #
         jd = self.load_status_json()
         if jd is not None:
-            # print "jd[0][time] =", (_start_time - jd[0]['time'])
+            # print("jd[0][time] =", (_start_time - jd[0]['time']))
             if (_start_time - jd[0]['time']) < 1200:
                 if _verbose:
-                    print >> sys.stdout, "PreLoading status_json"
+                    print("PreLoading status_json")
                 for d in jd:
                     if 'mac' in d:
                         m = d['mac']
@@ -632,14 +642,14 @@ class ArpMon(object):
                             self.mac_targets[m].last_seen = d['last_seen']
                             self.mac_targets[m].is_active = d['stat']
     #       else:
-    #           print >> sys.stdout, "Not Loading status_json", (_start_time - jd[0]['time'])
+    #           print("Not Loading status_json", (_start_time - jd[0]['time']))
     #    else:
-    #       print "no load_status_json()"
+    #       print("no load_status_json()")
 
         if _verbose > 1:
-            # print "Target Macs", " ".join(mac_targets.keys())
+            # print("Target Macs", " ".join(mac_targets.keys()))
             for c in self.mac_targets.values():
-                print "mac_targets = {:<4}: {:<19}{:<5}".format(" ", c.name, c.is_active)
+                print("mac_targets = {:<4}: {:<19}{:<5}".format(" ", c.name, c.is_active))
 
             self.print_status_all()
 
@@ -650,27 +660,27 @@ class ArpMon(object):
          if specified:
             read config file from command args
         """
-        print "get_target_dat: target_file=", target_file
+        print("get_target_dat: target_file=", target_file)
         if target_file is None:
             target_file = self.target_file
-        print "get_target_dat using target_file=", target_file
+        print("get_target_dat using target_file=", target_file)
         try:
             if target_file is not None:
-                print "Config file = {}".format(target_file)
+                print("Config file = {}".format(target_file))
                 with open(target_file) as confd:
                     conf_dat = confd.read()
-                print "get_conf: read", target_file
-            print "get_conf: data : ", conf_dat
+                print("get_conf: read", target_file)
+            print("get_conf: data : ", conf_dat)
             return conf_dat
-        except ValueError, ve:
-            print "Load Error :", ve
-            print conf_dat
+        except ValueError as ve:
+            print("Load Error :", ve)
+            print(conf_dat)
             raise
 
     def get_args(self):
 
         if _debug:
-            print "get_args"
+            print("get_args")
 
         parser = argparse.ArgumentParser(
             argument_default=argparse.SUPPRESS
@@ -747,8 +757,8 @@ class ArpMon(object):
 
         if ini.has_section('whoshere'):
             return ini.items('whoshere')
-        else:
-            return {}
+        
+        return {}
 
     def parse_args(self, config_file=None, config_dat=None):
         """
@@ -764,13 +774,13 @@ class ArpMon(object):
         global _print_config
 
         if _debug:
-            print "parse_args"
+            print("parse_args")
 
         args = self.get_args()
 
-        # print "arg config_file =", config_file
-        # print "arg config_dat =", config_dat
-        # print "ARGS =", args
+        # print("arg config_file =", config_file)
+        # print("arg config_dat =", config_dat)
+        # print("ARGS =", args)
 
         args_v = vars(args)
         # special case for config_file
@@ -794,9 +804,9 @@ class ArpMon(object):
         merged_args = self.args
         # merged_args.update(confvalues)
         # merged_args.update(vars(args))
-        print "\nconfvalues", confvalues
-        print "\nargs", vars(args)
-        print "\nmerged_args", merged_args
+        print("\nconfvalues", confvalues)
+        print("\nargs", vars(args))
+        print("\nmerged_args", merged_args)
 
         if 'verbose' in merged_args and merged_args['verbose'] is not None:
             self.verbose = int(merged_args['verbose'])
@@ -836,7 +846,7 @@ class ArpMon(object):
             self.time_recheck = int(merged_args['time_recheck'])
 
     #    if upload_config and self.config_file is None:
-    #        print "upload option require have config file option"
+    #        print("upload option require have config file option")
     #        sys.exit()
 
         #
@@ -859,12 +869,12 @@ class ArpMon(object):
 
         Mtargets._verbose = self.verbose
 
-        print "args", type(args)
-        print "args pr", args
-        print "vars args", vars(args)
-        print "redirect_io", self.redirect_io
-        print "log_dir", self.log_dir
-        print "pid_dir", self.pid_dir
+        print("args", type(args))
+        print("args pr", args)
+        print("vars args", vars(args))
+        print("redirect_io", self.redirect_io)
+        print("log_dir", self.log_dir)
+        print("pid_dir", self.pid_dir)
 
 
         # redirect_io=1
@@ -875,12 +885,12 @@ def sig_ignore(cursignal, frame):
     """
         ignore signal
     """
-    print >> sys.stderr, "Ignoring signal :", cursignal, frame
+    print("Ignoring signal :", cursignal, frame) # sys.stderr
     return
 
 
 # def sig_print_status(cursignal, frame):
-#     print time.strftime(TIME_FMT, time.localtime()), "\tcursignal=", cursignal
+#     print(time.strftime(TIME_FMT, time.localtime()), "\tcursignal=", cursignal)
 #     print_status_all()
 
 
@@ -897,8 +907,8 @@ def validate_config(config_dat):
 #        try:
 #            # dat = json.loads(conf_data)
 #            dat = json.loads(config_dat)
-#        except Exception, err:
-#            print "json.loads"
+#        except Exception as err:
+#            print("json.loads")
 #            raise ValueError(str(err))
 #    elif isinstance(config_dat, list):
 #        dat = config_dat
@@ -923,9 +933,9 @@ def validate_config(config_dat):
 #            # will raise exception if var does not exist
 #            # myisy.get_var(tp[2])
 #
-# #       except socket.error, err:
+# #       except socket.error as err:
 # #           raise ValueError(err + "\n" + str(tp))
-#        except Exception, err:
+#        except Exception as err:
 # #            raise ValueError(str(err) + "\n" + str(tp))
 #
 #    return True
@@ -938,28 +948,48 @@ def setup_io(am):
 #    signal.signal(signal.SIGUSR1, sig_print_status)
 #    signal.signal(signal.SIGUSR2, am._sig_refresh_statfile)
     if am.verbose:
-        print "init"
-        print "setup_io : redirect_io : ", am.redirect_io
-        print "setup_io : log_dir : ", am.log_dir
-        print "setup_io : pid_dir : ", am.pid_dir
+        print("init", sys.hexversion, WHOSHERE_VER)
+        print("setup_io : redirect_io : ", am.redirect_io)
+        print("setup_io : log_dir : ", am.log_dir)
+        print("setup_io : pid_dir : ", am.pid_dir)
 
     if am.redirect_io:
+#        if not os.path.lexists(am.log_dir):
+#            os.mkdir(am.log_dir, 0o775)
+
+        # DATE_FMT = "%Y%m%d%H%M"
+        data_stamp = time.strftime("%Y%m%d%H%M", time.localtime())
+        # print("Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time)))
 
         logpath = am.log_dir + "/whoshere.log"
-        if os.path.isfile(logpath):
-            os.rename(logpath, logpath + '-prev')
+        # print("logpath", type(logpath))
+        newf = logpath + '-' + data_stamp
+        newp = logpath + '-prev'
+        if os.path.lexists(logpath):
+            # print("os.rename", logpath, newf)
+            os.rename(logpath, newf)
+            if os.path.lexists(newp):
+                # print("os.unlink", newp)
+                os.unlink(newp)
+            # print("os.symlink", newf, newp)
+            os.symlink(newf, newp)
 #        sys.stdout = open(logpath, 'w+', 0)
-        mewout = os.open(logpath, os.O_WRONLY | os.O_CREAT, 0644)
+        mewout = os.open(logpath, os.O_WRONLY | os.O_CREAT, 0o644)
         sys.stdout.flush()
         os.dup2(mewout, 1)
         os.close(mewout)
         # sys.stdout = os.fdopen(1, 'w')
 
         logpath = am.log_dir + "/whoshere.err"
+        newf = logpath + '-' + data_stamp
+        newp = logpath + '-prev'
         if os.path.isfile(logpath):
-            os.rename(logpath, logpath + '-prev')
+            os.rename(logpath, newf)
+            if os.path.lexists(newp):
+                os.unlink(newp)
+            os.symlink(newf, newp)
 #        sys.stderr = open(logpath, 'w+', 0)
-        mewerr = os.open(logpath, os.O_WRONLY | os.O_CREAT, 0644)
+        mewerr = os.open(logpath, os.O_WRONLY | os.O_CREAT, 0o644)
         sys.stderr.flush()
         os.dup2(mewerr, 2)
         os.close(mewerr)
@@ -973,29 +1003,33 @@ def setup_io(am):
 
 #       try:
 #           os.setpgrp()
-#        except Exception, err:
-#           print "Error: os.setpgrp(): {}".format(str(err))
+#        except Exception as err:
+#           print("Error: os.setpgrp(): {}".format(str(err)))
 
         # signal.signal(signal.SIGHUP, sig_ignore)
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     if am.pid_dir:
+#        if not os.path.lexists(am.pid_dir):
+#            os.mkdir(am.pid_dir, 0o775)
         pidpath = am.pid_dir + "/whoshere.pid"
-        with open(pidpath, 'w', 0644) as f:
+        if os.path.lexists(pidpath):
+            os.unlink(pidpath)
+        with open(pidpath, 'w', 0o644) as f:
             f.write("{}\n".format(os.getpid()))
 
     if am.verbose:
-        print "Starting: {}\tpid={}".format(time.strftime(TIME_FMT, time.localtime()), os.getpid())
-        print "time_sleep=\t{:>2}:{:0<2}".format(*divmod(am.time_sleep, 60))
-        print "time_recheck=\t{:>2}:{:0<2}".format(*divmod(am.time_recheck, 60))
-        print "time_away=\t{:>2}:{:0<2}".format(*divmod(am.time_away, 60))
-        # print "var_refresh=\t{:>2}:{:0<2}".format(*divmod(am.time_var_refresh, 60))
-        print "sniff_timeout=\t{:>2}:{:0<2}".format(*divmod(am.sniff_timeout, 60))
-        print "verbose=\t{}".format(_verbose), am.args['verbose']
-        print "delta=\t{}".format(_delta)
-        print "pid=\t{}".format(os.getppid())
+        print("Starting: {}\tpid={}\tver={}".format(time.strftime(TIME_FMT, time.localtime()), os.getpid(), WHOSHERE_VER))
+        print("time_sleep=\t{:>2}:{:0<2}".format(*divmod(am.time_sleep, 60)))
+        print("time_recheck=\t{:>2}:{:0<2}".format(*divmod(am.time_recheck, 60)))
+        print("time_away=\t{:>2}:{:0<2}".format(*divmod(am.time_away, 60)))
+        # print("var_refresh=\t{:>2}:{:0<2}".format(*divmod(am.time_var_refresh, 60)))
+        print("sniff_timeout=\t{:>2}:{:0<2}".format(*divmod(am.sniff_timeout, 60)))
+        print("verbose=\t{}".format(_verbose), am.args['verbose'])
+        print("delta=\t{}".format(_delta))
+        print("pid=\t{}".format(os.getppid()))
 
-        print "config_file", am.config_file
+        print("config_file", am.config_file)
         sys.stdout.flush()
 
     return
@@ -1004,7 +1038,7 @@ def setup_io(am):
 if __name__ == '__main__':
 
     if _debug:
-        print "__main__"
+        print("__main__")
 
     arpmon = ArpMon()
 
