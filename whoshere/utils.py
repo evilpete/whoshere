@@ -6,13 +6,14 @@ import fcntl
 import re
 
 from scapy.sendrecv import send
-from scapy.layers.l2 import ARP
+# from scapy.layers.l2 import ARP
 from scapy.layers.inet import UDP, IP, ICMP
 from scapy.layers.inet6 import IPv6, ICMPv6EchoRequest
 # from scapy.all import send, UDP, IP, ICMP, IPv6, ICMPv6EchoRequest
-from .conf import TIME_FMT
+# from .conf import TIME_FMT
 
-__all__ = ['mac2ipv6', 'get_brdaddr', 'bcast_icmp', 'bcast_icmp6', 'upnp_probe', 'format_sec', 'normalize_mac']
+__all__ = ['mac2ipv6', 'get_brdaddr', 'bcast_icmp', 'bcast_icmp6',
+           'upnp_probe', 'format_sec', 'normalize_mac']
 
 #TIME_FMT = "%Y-%m-%d %H:%M:%S"
 

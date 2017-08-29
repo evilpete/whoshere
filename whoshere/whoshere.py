@@ -294,7 +294,9 @@ class ArpMon(object):
         self.sniff_thread.daemon = True
         self.sniff_thread.start()
         if self.verbose > 1:
-            print(time.strftime(TIME_FMT, time.localtime()), "\tstart_sniffloop() sniff_thread:", self.sniff_thread.name, current_thread().name)
+            print(time.strftime(TIME_FMT, time.localtime()),
+                  "\tstart_sniffloop() sniff_thread:",
+                  self.sniff_thread.name, current_thread().name)
             # print(time.strftime(TIME_FMT, time.localtime()), "\t", current_thread().name, "sniff loop")
 
     def start_pingloop(self):
@@ -338,17 +340,20 @@ class ArpMon(object):
             time_now = int(time.time())
 
             if self.ping_thread is not None and not self.ping_thread.is_alive():
-                print(time.strftime(TIME_FMT, time.localtime()), "\tping thread died", self.ping_thread)
+                print(time.strftime(TIME_FMT, time.localtime()),
+                      "\tping thread died", self.ping_thread)
                 # self.start_pingloop()
                 break
 
             if self.sniff_thread is not None and not self.sniff_thread.is_alive():
-                print(time.strftime(TIME_FMT, time.localtime()), "\tsniff_thread thread died", self.sniff_thread)
+                print(time.strftime(TIME_FMT, time.localtime()),
+                      "\tsniff_thread thread died", self.sniff_thread)
                 # self.start_sniffloop():
                 break
 
             if self.http_thread is not None and not self.http_thread.is_alive():
-                print(time.strftime(TIME_FMT, time.localtime()), "\thttp_thread thread died", self.http_thread)
+                print(time.strftime(TIME_FMT, time.localtime()),
+                      "\thttp_thread thread died", self.http_thread)
                 # self.start_http()
                 break
 
@@ -358,7 +363,7 @@ class ArpMon(object):
                     verbose_print_status_time = time_now + (self.time_away * 8)
                     self.print_status_all()
 
-            if ((time_now >= (self.last_write + self.sniff_timeout)) or self.do_stat_write):
+            if (time_now >= (self.last_write + self.sniff_timeout)) or self.do_stat_write:
                 if _verbose > 1  or _debug:
                     print(time.strftime(TIME_FMT, time.localtime()), "\twatch_threads :", \
                         (time_now - (self.last_write + self.sniff_timeout)), self.do_stat_write)
@@ -757,7 +762,7 @@ class ArpMon(object):
 
         if ini.has_section('whoshere'):
             return ini.items('whoshere')
-        
+
         return {}
 
     def parse_args(self, config_file=None, config_dat=None):
@@ -1019,7 +1024,8 @@ def setup_io(am):
             f.write("{}\n".format(os.getpid()))
 
     if am.verbose:
-        print("Starting: {}\tpid={}\tver={}".format(time.strftime(TIME_FMT, time.localtime()), os.getpid(), WHOSHERE_VER))
+        print("Starting: {}\tpid={}\tver={}".format(
+            time.strftime(TIME_FMT, time.localtime()), os.getpid(), WHOSHERE_VER))
         print("time_sleep=\t{:>2}:{:0<2}".format(*divmod(am.time_sleep, 60)))
         print("time_recheck=\t{:>2}:{:0<2}".format(*divmod(am.time_recheck, 60)))
         print("time_away=\t{:>2}:{:0<2}".format(*divmod(am.time_away, 60)))
