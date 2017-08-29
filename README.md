@@ -26,6 +26,12 @@ Simply install the package then set up targets list of network targets and optio
     python setup.py install --record files.txt
 ```
 
+or with pip
+
+```shell
+    pip install whoshere
+```
+
 You will also need to install [scapy](http://doc.scrapy.org/) :
 https://pypi.python.org/pypi/Scrapy
 

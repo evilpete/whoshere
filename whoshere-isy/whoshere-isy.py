@@ -17,9 +17,14 @@ import time
 
 from whoshere import ArpMon, setup_io, validate_config
 
-import ISY
-from ISY.IsyExceptionClass import IsySoapError, IsyResponseError
-# from ISY import IsyVar
+try:
+    import ISY
+    from ISY.IsyExceptionClass import IsySoapError, IsyResponseError
+    # from ISY import IsyVar
+except ImportError:
+    print("ISYlib is not installed ( or missing from python path")
+    print("install with:\n\tpip install Isylib")
+    exit(0)
 
 __author__ = "Peter Shipley"
 
