@@ -14,7 +14,7 @@ import ssl
 
 from distutils.core import setup
 
-version = '0.1.20170826'
+version = '0.1.20170829'
 
 setup(
     name='whoshere',
@@ -27,7 +27,7 @@ setup(
     url='https://github.com/evilpete/whoshere',
     # git='https://github.com/evilpete/whoshere.git',
     license='BSD',
-    download_url='https://bitbucket.org/evilpete/scapy-watch/get/master.tar.gz',
+    download_url='https://github.com/evilpete/whoshere/archive/0.1.20170829.tar.gz"
     description='Monitor hosts on local lan.',
     # long_description=open('README.txt').read(),
     # cmdclass = { 'install_scripts': install_scripts_and_symlinks }

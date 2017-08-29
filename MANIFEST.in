@@ -1,0 +1,7 @@
+include README.md
+include whoshere/*.py
+include whoshere-isy/whoshere-isy.py
+include whoshere-isy/README.md
+include whoshere-iftt/whoshere-iftt.py
+include whoshere-iftt/README.md
+prune Sav
