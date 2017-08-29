@@ -1,7 +1,7 @@
 
 from __future__ import print_function
 #from BaseHTTPServer import BaseHTTPRequestHandler
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler # , HTTPServer
 import select
 import time
 import json
