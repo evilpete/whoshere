@@ -26,9 +26,9 @@ setup(
     scripts=['whoshere-isy/whoshere-isy.py', 'whoshere-iftt/whoshere-iftt.py'],
     url='https://github.com/evilpete/whoshere',
     # git='https://github.com/evilpete/whoshere.git',
+    description='A program and library to monitor hosts on local network and trigger user defined events via a python callback method',
     license='BSD',
-    download_url='https://github.com/evilpete/whoshere/archive/0.1.20170829.tar.gz"
-    description='Monitor hosts on local lan.',
+    download_url='https://github.com/evilpete/whoshere/archive/0.1.20170829.tar.gz',
     # long_description=open('README.txt').read(),
     # cmdclass = { 'install_scripts': install_scripts_and_symlinks }
     install_requires=['scapy', 'requests'],
