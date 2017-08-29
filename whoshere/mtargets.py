@@ -3,10 +3,8 @@ import sys
 import re
 import time
 
-
 from threading import current_thread
 from scapy.all import srp, send, Ether, ARP, IP, ICMP, IPv6, ICMPv6EchoRequest
-
 from .utils import mac2ipv6, format_sec
 from .conf import TIME_FMT
 
@@ -18,7 +16,8 @@ __all__ = ['Mtargets']
 class Mtargets(object):
     _verbose = 0
 
-    # __slots__ = ['mac', 'name', 'ip', 'last_change', 'last_seen', 'is_active', 'callback', 'callback_args', 'linklocal']
+    # __slots__ = ['mac', 'name', 'ip', 'last_change', 'last_seen',
+    #              'is_active', 'callback', 'callback_args', 'linklocal']
 
     def __init__(self, **kargs):
 

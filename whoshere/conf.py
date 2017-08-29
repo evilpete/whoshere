@@ -1,6 +1,6 @@
 
 
-TIME_FMT = "%Y-%m-%d %H:%M:%S" 
+TIME_FMT = "%Y-%m-%d %H:%M:%S"
 
 WHOSHERE_VER = "0.1.20170826"
 STAT_FILE = "/var/www/whoshere-status"
@@ -16,5 +16,5 @@ HTTP_PORT_NUMBER = 8088
 
 SNIFF_TIMEOUT = 60 * 16
 TIME_FMT = "%Y-%m-%d %H:%M:%S"
- 
+
 VERBOSE = 0
