@@ -4,7 +4,7 @@ import re
 import time
 
 from threading import current_thread
-from scapy.all import srp, send, Ether, ARP, IP, ICMP, IPv6, ICMPv6EchoRequest
+from scapy.all import srp, send, sendp, Ether, ARP, IP, ICMP, IPv6, ICMPv6EchoRequest
 from .utils import mac2ipv6, format_sec
 from .conf import TIME_FMT
 
@@ -100,7 +100,7 @@ class Mtargets(object):
             return (None, None)
 
         if self.mac is None:
-            ans, unans = srp(Ether()/IP(dst=self.ip)/ICMP()/"whosthere", timeout=2)
+            ans, unans = sr(IP(dst=self.ip)/ICMP()/"whosthere", timeout=2)
         else:
             ans, unans = srp(Ether(dst=self.mac)/IP(dst=self.ip)/ICMP()/"whosthere", timeout=2)
 
@@ -110,16 +110,16 @@ class Mtargets(object):
 
         return ans, unans
 
-    def arp_ping(self):
-        if self.ip is None:
-            return (None, None)
-        ans, unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=self.ip),
-                         timeout=1.5, retry=2)
-        if self._verbose > 1:
-            print("arp_ping: ", self.ip, " ans = ", len(ans), ", unans = ", len(unans))
-            # sys.stdout.flush()
-        return (ans, unans)
-    # http://www.secdev.org/projects/scapy/doc/usage.html
+#    def arp_ping(self):
+#        if self.ip is None:
+#            return (None, None)
+#        ans, unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=self.ip),
+#                         timeout=1.5, retry=2)
+#        if self._verbose > 1:
+#            print("arp_ping: ", self.ip, " ans = ", len(ans), ", unans = ", len(unans))
+#            # sys.stdout.flush()
+#        return (ans, unans)
+#    # http://www.secdev.org/projects/scapy/doc/usage.html
 
     def sendip6ping(self):
         """
@@ -130,7 +130,7 @@ class Mtargets(object):
                 self.linklocal = mac2ipv6(self.mac)
             if self._verbose > 1:
                 print("sendip6ping:", self.linklocal, self.name)
-            send(IPv6(dst=self.linklocal)/ICMPv6EchoRequest()/"whosthere")
+            sendp(Ether(dst=self.mac)/IPv6(dst=self.linklocal, hlim=0)/ICMPv6EchoRequest()/"whosthere")
 
     def sendarpreq(self):
         """
@@ -145,10 +145,13 @@ class Mtargets(object):
         """
             send a ICMP ping request packet ( IP 4 )
         """
-        dst_ip = (self.ip or "255.255.255.255")
+        # dst_ip = (self.ip or "255.255.255.255")
+        if self.ip is None:
+            return
+
         if self._verbose > 1:
             print("sendicmp: ", self.mac, dst_ip, self.name)
-        send(IP(dst=dst_ip)/ICMP()/"whosthere")
+        sendp(Ether(dst=self.mac)/IP(dst=dst_ip)/ICMP()/"whosthere")
 
     def get_dict(self):
         return {'mac': self.mac,

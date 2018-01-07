@@ -531,6 +531,9 @@ class ArpMon(object):
 
         ddat = self.generate_status_list()
 
+        if os.path.lexists(self.stat_file + '.json'):
+            os.rename(self.stat_file + '.json', self.stat_file + '.json-prev')
+
         with open(self.stat_file + '.json', 'w+') as fp:
             # fp.write('"astat":')
             json.dump(ddat, fp, sort_keys=True, indent=2)
@@ -872,6 +875,8 @@ class ArpMon(object):
         if self.sniff_timeout is None:
             self.sniff_timeout = SNIFF_TIMEOUT  # int(self.time_var_refresh / 3) + 10
 
+        if self.iface:
+            _scapy_conf.iface = self.iface
         Mtargets._verbose = self.verbose
 
         print("args", type(args))
