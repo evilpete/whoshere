@@ -130,6 +130,27 @@ body {
         do_report();
     }
 
+
+    function fancyTimeFormat(time) {   
+        // Hours, minutes and seconds
+        var hrs = ~~(time / 3600);
+        var mins = ~~((time % 3600) / 60);
+        var secs = time % 60;
+
+        // Output like "1:01" or "4:03:59" or "123:03:59"
+        var ret = "";
+
+        if (hrs > 0) {
+            ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+        }
+
+        ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+        ret += "" + secs.toString().substr(-2);
+        return ret;
+    }
+
+
+
     //
     // Report Table Generation
     //
@@ -137,6 +158,9 @@ body {
     function do_report() {
 
         var dtime = Date.now() / 1000;
+
+        // var rtime = new  Date()
+        // rtime.setSeconds(rtime.getSeconds() + status_data.refresh_time);
 
         data_age = dtime - status_data.time;
 
@@ -153,7 +177,8 @@ body {
                    + "Prog : " + status_data.prog + "\n"
                    + "Pid : " + status_data.pid + "\n"
                    + "Item Count : " + status_data.len + "\n"
-                   + "Refresh_Time : " + status_data.refresh_time;
+                   + "Refresh : " + status_data.refresh_time + "\n"
+                   + "Refresh_Time : " + status_data.reload_time_str;
 
 
         var date_color = "white";
@@ -191,15 +216,26 @@ body {
                 mcolor = "gray";
             }
 
+
+
             var last_seen_str = targ_data[pp].last_seen_str
+            var last_seen_title = ""
             if ( Number(targ_data[pp].last_seen) < 1200) {
                 last_seen_str = "&nbsp;";
                 ccolor = "gray";
+            } else {
+                var d_last_seen = fancyTimeFormat( (dtime - Number(targ_data[pp].last_seen)) )
+                last_seen_title = " title=" + d_last_seen
             }
 
-            var last_change_str = targ_data[pp].last_change_str;
+            var d_last_change = fancyTimeFormat( (dtime - Number(targ_data[pp].last_change)) )
+
+            var last_change_title = ""
             if ( Number(targ_data[pp].last_change) == 0) {
                 last_change_str = "&nbsp;";
+            } else {
+                var last_change_str = targ_data[pp].last_change_str;
+                last_change_title = " title=" + d_last_change
             }
 
             // if (targ_data[pp].stat == "1" && (dtime - Number(targ_data[pp].last_change)) < status_data.refresh_time) {
@@ -226,11 +262,11 @@ body {
                         + "<font color='" + ncolor + "'>"
                         + targ_data[pp].name
                         + "</font></TD>"
-                    + "<TD id=lseen" + itemc + ">"
+                    + "<TD id=lseen" + itemc + last_seen_title + ">"
                         + "<font color='" + scolor + "'>"
                         + last_seen_str
                         + "</font></TD>"
-                    + "<TD id=lchange" + itemc + ">"
+                    + "<TD id=lchange" + itemc + last_change_title + ">"
                         + "<font color='" + ccolor + "'>"
                         + last_change_str
                         + "</font></TD>"

@@ -61,14 +61,14 @@ def bcast_icmp(iface):
     global iface_bcast_addr
     if iface_bcast_addr is None:
         iface_bcast_addr = get_brdaddr(iface)
-    send(IP(dst=iface_bcast_addr)/ICMP()/"whosthere")
+    send(IP(dst=iface_bcast_addr)/ICMP()/"whosthere", iface=iface)
 
 
 def bcast_icmp6():
     """
        Send broadcast IP6 ping
     """
-    send(IPv6(dst="ff02::1")/ICMPv6EchoRequest()/"whosthere")
+    send(IPv6(dst="ff02::1")/ICMPv6EchoRequest()/"whosthere", iface='eth0')
 
 
 def upnp_probe():
@@ -90,10 +90,10 @@ def upnp_probe():
 #            probe.format("ssdp:all"), loop=2, inter=0.3)
 #    time.sleep(.5)
     send(IP(dst="239.255.255.250") / UDP(sport=1900, dport=1900) / \
-        probe.format(ST="ssdp:all", IP="239.255.255.250"))
+        probe.format(ST="ssdp:all", IP="239.255.255.250"), iface='eth0')
     time.sleep(.5)
     send(IPv6(dst="ff02::c") / UDP(sport=1900, dport=1900) / \
-        probe.format(ST="ssdp:all", IP="[ff02::c]"))
+        probe.format(ST="ssdp:all", IP="[ff02::c]"), iface='eth0')
 
 
 def format_sec(total_seconds):

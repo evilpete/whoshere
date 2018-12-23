@@ -6,7 +6,7 @@ import time
 from threading import current_thread
 from scapy.all import srp, send, sendp, Ether, ARP, IP, ICMP, IPv6, ICMPv6EchoRequest
 from .utils import mac2ipv6, format_sec
-from .conf import TIME_FMT
+from .conf import TIME_FMT, TIME_AWAY_DEFAULT, TIME_AWAY_MAX
 
 
 __all__ = ['Mtargets']
@@ -44,23 +44,27 @@ class Mtargets(object):
         self.callback = None
         self.callback_args = None
 
+        self.time_away = TIME_AWAY_DEFAULT
+
     def add_callback(self, func, *args):
+        # type: (...) -> None
         self.callback = func
         self.callback_args = args
 
     def set_status(self, state):
+        # type: (int) -> None
 
         time_now = time.time()
         strtm = time.strftime(TIME_FMT, time.localtime(time_now))
 
-        if self._verbose:  # or (delta and self.is_active != state):
+        if self.is_active == -1 and self.last_seen < 1:
+            time_since = 0 # time_now - int(_start_time)
+            time_change = 0 # time_now - int(_start_time)
+        else:
+            time_since = time_now - self.last_seen
+            time_change = time_now - self.last_change
 
-            if self.is_active == -1 and self.last_seen < 1:
-                time_since = 0 # time_now - int(_start_time)
-                time_change = 0 # time_now - int(_start_time)
-            else:
-                time_since = time_now - self.last_seen
-                time_change = time_now - self.last_change
+        if self._verbose:  # or (delta and self.is_active != state):
 
             if state > 0:
                 print("{}\t{} Last_seen   {:<16} :{:>2} {:3.2f} {:<12} : {:3.2f} {:<12}".format(
@@ -87,6 +91,18 @@ class Mtargets(object):
             #        strtm, self.mac, self.name,
             #        self.is_active, state))
 
+        # we are changing state from 0 -> 1
+        # and we have need state 0 for less then 5 min
+        # set add 1min to time_away timeout
+        if self.is_active == 0 and state and time_change and time_change < 300:
+            if  self.time_away == 0:
+                self.time_away = TIME_AWAY_DEFAULT + 60
+            else:
+                self.time_away = self.time_away + 60
+
+            if self.time_away > TIME_AWAY_MAX:
+                self.time_away = TIME_AWAY_MAX
+
         self.is_active = state
 
         if self.callback is not None:
@@ -96,6 +112,7 @@ class Mtargets(object):
         sys.stdout.flush()
 
     def icmp_ping(self):
+        # type: () -> None
         if self.ip is None:
             return (None, None)
 
@@ -122,6 +139,7 @@ class Mtargets(object):
 #    # http://www.secdev.org/projects/scapy/doc/usage.html
 
     def sendip6ping(self):
+        # type: () -> None
         """
             send a IPv6 Icmp Ping
         """
@@ -130,18 +148,20 @@ class Mtargets(object):
                 self.linklocal = mac2ipv6(self.mac)
             if self._verbose > 1:
                 print("sendip6ping:", self.linklocal, self.name)
-            sendp(Ether(dst=self.mac)/IPv6(dst=self.linklocal, hlim=0)/ICMPv6EchoRequest()/"whosthere")
+            sendp(Ether(dst=self.mac)/IPv6(dst=self.linklocal, hlim=0)/ICMPv6EchoRequest()/"whosthere", iface="eth0")
 
     def sendarpreq(self):
+        # type: () -> None
         """
             send a arp request
         """
         if self._verbose > 1:
             print("sendarpreq:", self.ip, self.name)
         if self.ip is not None:
-            send(ARP(op=ARP.who_has, pdst=self.ip))
+            send(ARP(op=ARP.who_has, pdst=self.ip), iface="eth0")
 
     def sendicmp(self):
+        # type: () -> None
         """
             send a ICMP ping request packet ( IP 4 )
         """
@@ -161,9 +181,12 @@ class Mtargets(object):
                 'last_change_str': time.strftime("%H:%M:%S %Y%m%d", time.localtime(self.last_change)),
                 'stat': self.is_active,
                 'last_seen': self.last_seen,
-                'last_seen_str': time.strftime("%H:%M:%S %Y%m%d", time.localtime(self.last_seen))}
+                'last_seen_str': time.strftime("%H:%M:%S %Y%m%d", time.localtime(self.last_seen)),
+                'time_away' : self.time_away,
+                }
 
     def __str__(self):
+        # type: () -> str
         return " ".join([self.mac, (self.ip or "0.0.0.0"), str(self.is_active)])
 
     def __repr__(self):

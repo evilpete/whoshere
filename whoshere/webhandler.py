@@ -34,6 +34,9 @@ class webHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/whoshere-status."):
             self.do_stat_responce()
+        else:
+            self.send_error(404, "File Not Found: {}".format(self.path))
+
 #        elif self.path == "/whoshere.html":
 #            self.do_file_serve("/var/www" + "/whoshere.html")
 
@@ -65,7 +68,7 @@ class webHandler(BaseHTTPRequestHandler):
             mimetype = 'application/json'
             self.send_response(200)
             self.send_header('Content-type', mimetype)
-            self.send_header('Cache-Control', "max-age=180, Private")
+            self.send_header('Cache-Control', "max-age=30, Private")
             # if self.chunked
             #    self.send_header('Transfer-Encoding': "chunked")
             self.send_header('Content-Length', len(jdata))

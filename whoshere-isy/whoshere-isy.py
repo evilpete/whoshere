@@ -11,11 +11,13 @@ from __future__ import print_function
 # import sys
 # import os
 import argparse
+# import code
 # import io
 import json
 import time
 
 from whoshere import ArpMon, setup_io, validate_config
+
 
 try:
     import ISY
@@ -31,8 +33,8 @@ __author__ = "Peter Shipley"
 verbose = 0
 # target_file = None
 # config_file = None
-ISY_TARG_PATH = "/WEB/CONF/mtargets.jsn"
-ISY_CONF_PATH = "/WEB/CONF/whoshere.ini"
+ISY_TARG_PATH = "/WEB/mtargets.jsn"
+ISY_CONF_PATH = "/WEB/whoshere.ini"
 
 
 def parse_localargs():
@@ -63,7 +65,7 @@ def isy_upload_conf(cur_file, isy_path):
 
     # cur_targ_data = None
     print("Config file = {}".format(cur_file))
-    print("ISY parh = {}".format(isy_path))
+    print("ISY path = {}".format(isy_path))
     with open(cur_file) as confd:
         try:
             cur_data = confd.read()
@@ -87,7 +89,9 @@ def isy_upload_conf(cur_file, isy_path):
                 print("Config Valid")
 
     try:
-        myisy._sendfile(data=cur_data, filename=isy_path)
+        res = myisy._sendfile(data=cur_data, filename=isy_path)
+        if verbose:
+            print('_sendfile:', res)
     except IsySoapError as se:
         if se.code() == 403:
             print("Error uploading {0} : Forbidden ( code=403 )".format(isy_path))
@@ -211,6 +215,11 @@ if __name__ == '__main__':
     arpmon.args.update(ag)
     verbose = arpmon.verbose
 
+#    if verbose:
+#        print('whoshere:', whoshere._file__)
+#
+#    code.interact(local=locals())
+
     # if ('upload_config' in arpmon.args and arpmon.args['upload_config]) or 'upload_targets' in arpmon.args and arpmon.args['upload_targets']:
     if arpmon.args.get('upload_config') or arpmon.args.get('upload_targets'):
         if verbose:
@@ -224,8 +233,8 @@ if __name__ == '__main__':
     if verbose > 1:
         print("downloaded targ config :", targ_dat)
 
-    if verbose:
-        print("arpmon.args :", type(arpmon.args))
+    # if verbose:
+    #     print("arpmon.args :", type(arpmon.args))
 
     arpmon.load_targets(target_dat=targ_dat)
 

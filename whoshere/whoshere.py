@@ -116,11 +116,12 @@ class ArpMon(object):
         'log_dir': LOG_DIR,
         'pid_dir': PID_DIR,
         'iface': IFACE,
-        # 'http_port': None, # HTTP_PORT_NUMBER,
+        'http_port': HTTP_PORT_NUMBER,
         'verbose': VERBOSE,
     }
 
     def __init__(self, **kargs):
+        # type: (...) -> None
         self.mac_targets = {}
 
         self.kargs = kargs
@@ -159,6 +160,7 @@ class ArpMon(object):
         self.sniff_timeout = None
 
     def add_target(self, mtarg):
+        # type: (...) -> None
         if isinstance(mtarg, Mtargets):
             self.mac_targets[mtarg.mac] = mtarg
             if _debug:
@@ -167,6 +169,7 @@ class ArpMon(object):
 #                print("NOT adding target")
 
     def print_status_all(self):
+        # type: (...) -> int
         # print("Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time)))
         for c in self.mac_targets.values():
             # print(c.mac, c.ip, c.name, c.is_active, c.last_seen, c.last_change)
@@ -180,6 +183,7 @@ class ArpMon(object):
         return 0
 
     def sniff_loop(self):
+        # type: (...) -> None
         verbose_time = int(time.time()) + (self.time_away * 8)
         # last_var_ref = int(time.time())
 
@@ -222,6 +226,7 @@ class ArpMon(object):
         return
 
     def _pcap_callback(self, pkt):
+        # type: (...) -> None
 
         eaddr = None
         ipaddr = None
@@ -274,6 +279,7 @@ class ArpMon(object):
         return None
 
     def run(self):
+        # type: () -> None
         self.start_pingloop()
 
         if _verbose:
@@ -290,6 +296,7 @@ class ArpMon(object):
         # self.sniff_loop()
 
     def start_sniffloop(self):
+        # type: () -> None
         self.sniff_thread = Thread(target=self.sniff_loop, name="sniff_looper")
         self.sniff_thread.daemon = True
         self.sniff_thread.start()
@@ -300,6 +307,7 @@ class ArpMon(object):
             # print(time.strftime(TIME_FMT, time.localtime()), "\t", current_thread().name, "sniff loop")
 
     def start_pingloop(self):
+        # type: () -> None
 
         self.ping_thread = Thread(target=self.ping_loop, name="ping_looper")
         self.ping_thread.daemon = True
@@ -310,6 +318,7 @@ class ArpMon(object):
                       self.ping_thread.name, current_thread().name)
 
     def start_http(self):
+        # type: () -> None
 
         webHandler.arp_obj = self
 
@@ -322,6 +331,7 @@ class ArpMon(object):
                   self.http_thread.name, current_thread().name)
 
     def http_server(self, am):
+        # type: () -> None
 
         # webHandler.arp_obj = self
 
@@ -331,12 +341,14 @@ class ArpMon(object):
         server.serve_forever()
 
     def watch_threads(self):
+        # type: () -> None
 
         verbose_print_status_time = int(time.time()) + (self.time_away * 8)
 
+        sleep_dur = int(self.time_sleep * .75)
         while True:
 
-            time.sleep(self.time_sleep)
+            time.sleep(sleep_dur)
             time_now = int(time.time())
 
             if self.ping_thread is not None and not self.ping_thread.is_alive():
@@ -364,17 +376,18 @@ class ArpMon(object):
                     self.print_status_all()
 
             if (time_now >= (self.last_write + self.sniff_timeout)) or self.do_stat_write:
+                self.do_stat_write = False
                 if _verbose > 1  or _debug:
                     print(time.strftime(TIME_FMT, time.localtime()), "\twatch_threads :", \
                         (time_now - (self.last_write + self.sniff_timeout)), self.do_stat_write)
                 self.write_status_json()
                 self.last_write = time_now
-                self.do_stat_write = False
 
     #
     # Send arp and/or pings if we have not heard from the target recently
     #
     def ping_loop(self):
+        # type: () -> None
         """
             init stage:
                 do a couple broadcasts pings and UPNP probles
@@ -470,7 +483,10 @@ class ArpMon(object):
 
                 time_since = time_now - c.last_seen
 
-                if time_since >= self.time_away:
+                t_away = c.time_away or self.time_away
+
+                # time_since >= self.time_away:
+                if time_since >= t_away:
                     if _verbose > 1 and c.ip is None:
                         print("{}\tping_loop: time_since >= time_away, last_seen = {}".format(
                             strtm,
@@ -483,6 +499,11 @@ class ArpMon(object):
 
                     c.set_status(0)
                     self.do_stat_write = True
+
+            if self.do_stat_write:
+                self.do_stat_write = False
+                self.write_status_json()
+                self.last_write = time_now
 
 #
 # time_sleep  ping_loop sleep time
@@ -497,6 +518,7 @@ class ArpMon(object):
 # print(time.asctime(time.localtime()))
 
     def write_status_json(self):
+        # type: () -> None
         print("{}\t{} stat_file   {:<16}".format(
             str(time.strftime(TIME_FMT, time.localtime())),
             "xx:xx:xx:xx:xx:xx",
@@ -504,6 +526,7 @@ class ArpMon(object):
         self.write_status_list_json()
 
     def generate_status_list(self):
+        # type: () -> None
 
         # print("Start Time:", time.strftime(TIME_FMT, time.localtime(_start_time)))
         ret = []
@@ -518,7 +541,8 @@ class ArpMon(object):
             'start_time_str': str(time.strftime(TIME_FMT, time.localtime(_start_time))),
             'pid': os.getpid(),
             'len': len(self.mac_targets),
-            'refresh_time': self.sniff_timeout
+            'refresh_time': self.sniff_timeout,
+            'reload_time_str': str(time.strftime(TIME_FMT, time.localtime(time_now + self.sniff_timeout))),
             })
 
         # for c in self.mac_targets.values():
@@ -528,6 +552,7 @@ class ArpMon(object):
         return ret
 
     def write_status_list_json(self):
+        # type: () -> None
 
         ddat = self.generate_status_list()
 
@@ -545,6 +570,7 @@ class ArpMon(object):
         return
 
     def load_status_json(self):
+        # type: () -> None
         jdata = None
         jsonfile = self.stat_file + '.json'
         if _verbose:
@@ -569,6 +595,7 @@ class ArpMon(object):
         return None
 
     def _sig_refresh_statfile(self, cursignal, frame):
+        # type: (...) -> None
         # pylint: disable=unused-argument
         self.write_status_json()
 
@@ -584,19 +611,21 @@ class ArpMon(object):
 
         if _verbose:
             print("Writing Status")
-        self.write_status_json()
+            self.write_status_json()
 
-        if self.pid_dir:
-            pidpath = self.pid_dir + "/whoshere.pid"
-            if os.path.isfile(pidpath):
-                os.remove(pidpath)
+            if self.pid_dir:
+                pidpath = self.pid_dir + "/whoshere.pid"
+                if os.path.isfile(pidpath):
+                    os.remove(pidpath)
 
-        if _verbose:
-            print("Flushing")
+            if _verbose:
+                print("Flushing")
 
-        sys.stdout.flush()
-        sys.stderr.flush()
-        sys.exit(0)
+            sys.stdout.flush()
+            sys.stderr.flush()
+            if _verbose:
+                print("exiting")
+            sys.exit(0)
 
     def load_targets(self, target_dat=None):
 
@@ -648,7 +677,8 @@ class ArpMon(object):
                         if m in self.mac_targets:
                             self.mac_targets[m].last_change = d['last_change']
                             self.mac_targets[m].last_seen = d['last_seen']
-                            self.mac_targets[m].is_active = d['stat']
+                            self.mac_targets[m].is_active = d.get('stat', -1)
+                            self.mac_targets[m].time_away = d.get('time_away', 0)
     #       else:
     #           print("Not Loading status_json", (_start_time - jd[0]['time']))
     #    else:
@@ -730,6 +760,10 @@ class ArpMon(object):
         parser.add_argument("--time-away", dest="time_away",
                             type=int,
                             help="away timeout")
+
+        parser.add_argument("--http-port", '--http_port', dest="http_port",
+                            type=int,
+                            help="http port for web data server")
 
         # parser.add_argument("--var-refresh", dest="var_refresh",
         #                     type=int,
@@ -877,6 +911,8 @@ class ArpMon(object):
 
         if self.iface:
             _scapy_conf.iface = self.iface
+            _scapy_conf.iface6 = self.iface
+        _scapy_conf.ipv6_enabled = False
         Mtargets._verbose = self.verbose
 
         print("args", type(args))
@@ -885,18 +921,19 @@ class ArpMon(object):
         print("redirect_io", self.redirect_io)
         print("log_dir", self.log_dir)
         print("pid_dir", self.pid_dir)
+        print("http_port", self.http_port)
 
 
         # redirect_io=1
         # exit(0)
 
 
-def sig_ignore(cursignal, frame):
-    """
-        ignore signal
-    """
-    print("Ignoring signal :", cursignal, frame) # sys.stderr
-    return
+    def sig_ignore(cursignal, frame):
+        """
+            ignore signal
+        """
+        print("Ignoring signal :", cursignal, frame) # sys.stderr
+        return
 
 
 # def sig_print_status(cursignal, frame):
@@ -1031,11 +1068,13 @@ def setup_io(am):
     if am.verbose:
         print("Starting: {}\tpid={}\tver={}".format(
             time.strftime(TIME_FMT, time.localtime()), os.getpid(), WHOSHERE_VER))
-        print("time_sleep=\t{:>2}:{:0<2}".format(*divmod(am.time_sleep, 60)))
-        print("time_recheck=\t{:>2}:{:0<2}".format(*divmod(am.time_recheck, 60)))
-        print("time_away=\t{:>2}:{:0<2}".format(*divmod(am.time_away, 60)))
+
+        print("time_sleep=\t{:>2}:{:0<2}\t{st}".format(*divmod(am.time_sleep, 60), st=am.time_sleep))
+
+        print("time_recheck=\t{:>2}:{:0<2}\t{st}".format(*divmod(am.time_recheck, 60), st=am.time_recheck))
+        print("time_away=\t{:>2}:{:0<2}\t{st}".format(*divmod(am.time_away, 60), st=am.time_away))
         # print("var_refresh=\t{:>2}:{:0<2}".format(*divmod(am.time_var_refresh, 60)))
-        print("sniff_timeout=\t{:>2}:{:0<2}".format(*divmod(am.sniff_timeout, 60)))
+        print("sniff_timeout=\t{:>2}:{:0<2}\t{st}".format(*divmod(am.sniff_timeout, 60), st=am.sniff_timeout))
         print("verbose=\t{}".format(_verbose), am.args['verbose'])
         print("delta=\t{}".format(_delta))
         print("pid=\t{}".format(os.getppid()))
