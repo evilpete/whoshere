@@ -32,7 +32,7 @@ import traceback
 import argparse
 import json
 import logging
-# import socket
+import socket
 # import StringIO
 
 from configparser import SafeConfigParser as ConfigParser
@@ -44,7 +44,7 @@ from http.server import HTTPServer
 
 
 # import scapy.all
-from scapy.all import sniff, conf as _scapy_conf, Ether, ARP, IP, Dot3
+from scapy.all import sniff, conf as _scapy_conf, Ether, ARP, IP, Dot3, IPv6
 
 
 from .utils import bcast_icmp, bcast_icmp6, upnp_probe
@@ -107,6 +107,7 @@ class ArpMon(object):
     log_dir = LOG_DIR
     pid_dir = PID_DIR
     iface = IFACE
+    no_ipv6 = NO_IPV6
 
     defaults = {
         'time_away': TIME_AWAY_DEFAULT,
@@ -118,6 +119,7 @@ class ArpMon(object):
         'iface': IFACE,
         'http_port': HTTP_PORT_NUMBER,
         'verbose': VERBOSE,
+        'no_ipv6': NO_IPV6,
     }
 
     def __init__(self, **kargs):
@@ -159,6 +161,8 @@ class ArpMon(object):
         # self.time_var_refresh = None
         self.sniff_timeout = None
 
+        self.no_ipv6 = None
+
     def add_target(self, mtarg):
         # type: (...) -> None
         if isinstance(mtarg, Mtargets):
@@ -182,12 +186,18 @@ class ArpMon(object):
         sys.stdout.flush()
         return 0
 
+
+    def blue_loop(self):
+        pass
+
     def sniff_loop(self):
         # type: (...) -> None
         verbose_time = int(time.time()) + (self.time_away * 8)
         # last_var_ref = int(time.time())
 
         pcap_filter = "ether src {}".format(" or ".join(self.mac_targets.keys()))
+
+        print('sniff_loop pid', os.getpid())
 
         if _debug:
             print("pcap_filter=", pcap_filter)
@@ -198,7 +208,7 @@ class ArpMon(object):
                 sniff(prn=self._pcap_callback, iface=self.iface,
                       filter=pcap_filter, store=0,
                       timeout=self.sniff_timeout)
-            except select.error as se:
+            except select.error as _se:
                 # print("scapy sniff : select.error", se)
                 continue
 
@@ -230,7 +240,9 @@ class ArpMon(object):
 
         eaddr = None
         ipaddr = None
+        # ip6addr = None
         # pktinfo = None
+        _pkt_type
 
         if ARP in pkt and pkt[ARP].op in (1, 2):  # who-has or is-at
             eaddr = pkt[ARP].hwsrc
@@ -242,6 +254,9 @@ class ArpMon(object):
             eaddr = pkt[Ether].src
         elif Dot3 in pkt:
             eaddr = pkt[Dot3].src
+        elif IPv6 in pkt:
+            eaddr = pkt[Ether].src
+            # ip6addr = pkt[IPv6].src
         else:
             # pkt.show()
             return None
@@ -293,6 +308,8 @@ class ArpMon(object):
         if isinstance(self.http_port, (int)) and self.http_port > 1:
             self.start_http()
 
+        # self.start_blueloop()
+
         # self.sniff_loop()
 
     def start_sniffloop(self):
@@ -306,6 +323,7 @@ class ArpMon(object):
                   self.sniff_thread.name, current_thread().name)
             # print(time.strftime(TIME_FMT, time.localtime()), "\t", current_thread().name, "sniff loop")
 
+
     def start_pingloop(self):
         # type: () -> None
 
@@ -316,6 +334,17 @@ class ArpMon(object):
             print(time.strftime(TIME_FMT, time.localtime()), \
                      "\tstart_pingloop() ping_thread:", \
                       self.ping_thread.name, current_thread().name)
+
+    def start_blueloop(self):
+        # type: () -> None
+
+        self.blue_thread = Thread(target=self.blue_loop, name="blue_looper")
+        self.blue_thread.daemon = True
+        self.blue_thread.start()
+        if self.verbose > 1:
+            print(time.strftime(TIME_FMT, time.localtime()), \
+                     "\tstart_blueloop() blue_thread:", \
+                      self.blue_thread.name, current_thread().name)
 
     def start_http(self):
         # type: () -> None
@@ -337,8 +366,17 @@ class ArpMon(object):
 
         server = HTTPServer(('', self.http_port), webHandler)
         if self.verbose:
-            print('Started httpserver on port ', self.http_port)
-        server.serve_forever()
+            print('Started httpserver on port {} pid {}'.format(self.http_port, os.getpid()))
+        while True:
+            try:
+                server.serve_forever()
+            except socket.error, e:
+                print >> sys.stderr, "http_server socket.error", e
+            except IOError, e:
+                print >> sys.stderr, "http_server IOError.error", e.errno, e
+            finally:
+                print >> sys.stderr, "http_server serve_forever ended"
+
 
     def watch_threads(self):
         # type: () -> None
@@ -406,6 +444,7 @@ class ArpMon(object):
 
         if _verbose > 1:
             print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop init", current_thread().name)
+            print('ping_loop pid', os.getpid())
             sys.stdout.flush()
 
         if _debug:
@@ -418,7 +457,7 @@ class ArpMon(object):
         # a couple quick one time broadcasts
         if _verbose > 1:
             print("upnp_probe")
-        upnp_probe()
+        upnp_probe(self.no_ipv6)
         time.sleep(.30)
 
         if _verbose > 1:
@@ -426,14 +465,18 @@ class ArpMon(object):
         bcast_icmp(self.iface)
         time.sleep(.30)
 
-        if _verbose > 1:
-            print("ping6 bcast")
-        bcast_icmp6()
-        time.sleep(.30)
+        if not self.no_ipv6:
+            if _verbose > 1:
+                print("ping6 bcast")
+            bcast_icmp6()
+            time.sleep(.30)
 
         if _debug:
             print("ping each")
         for c in self.mac_targets.values():
+
+            if c.mac_type != 'ether':
+                continue
 
             if c.last_seen > time_now:
                 continue
@@ -441,7 +484,9 @@ class ArpMon(object):
             if c.ip is None:
                 # c.sendicmp()
                 # icmp_a, icmp_u = icmp_ping("255.255.255.255", c.mac)
-                c.sendip6ping()
+                pass
+                if not self.no_ipv6:
+                    c.sendip6ping()
             else:
                 c.sendarpreq()
 
@@ -468,13 +513,19 @@ class ArpMon(object):
             strtm = time.strftime(TIME_FMT, time.localtime())
 
             for c in self.mac_targets.values():
+
+                if c.mac_type != 'ether':
+                    continue
+
                 time_since = time_now - c.last_seen
                 if time_since >= self.time_recheck:
                     if c.ip is None:
-                        c.sendip6ping()
+                        if not self.no_ipv6:
+                            c.sendip6ping()
                     else:
                         c.sendarpreq()
                     time.sleep(.10)
+
 
             for c in self.mac_targets.values():
 
@@ -543,6 +594,7 @@ class ArpMon(object):
             'len': len(self.mac_targets),
             'refresh_time': self.sniff_timeout,
             'reload_time_str': str(time.strftime(TIME_FMT, time.localtime(time_now + self.sniff_timeout))),
+            'whoshere_ver': WHOSHERE_VER,
             })
 
         # for c in self.mac_targets.values():
@@ -646,21 +698,35 @@ class ArpMon(object):
 
         target_list = json.loads(self.target_data)
 
-        # [ "10.1.1.105", "dc:0b:34:b1:cc:5f", "is_home" ]
+        # Old  [ "10.1.1.105", "dc:0b:34:b1:cc:5f", "is_home" ]
         # loop through config, skipping errors if possible
         for tp in target_list:
             # check that macaddr is given
-            if tp[1] is not None:
-                try:
-                    mt = self.mac_targets[tp[1]] = Mtargets(mac=tp[1], ip=tp[0], name=tp[2])
-                    self.add_target(mt)
+            if isinstance(tp, list):
+                if tp[1] is not None:
+                    try:
+                        mt = self.mac_targets[tp[1]] = Mtargets(mac=tp[1], ip=tp[0], name=tp[2])
+                        self.add_target(mt)
 
-                except Exception as err:
-                    print("Bad target:", tp, err) # sys.stderr
-                    raise
+                    except Exception as err:
+                        print("Bad target:", tp, err) # sys.stderr
+                        raise
 
-            else:
-                print("unknown mac :", tp) # sys.stderr
+                else:
+                    print("unknown mac :", tp) # sys.stderr
+            elif isinstance(tp, dict):
+                t_dict = {'mac': None, 'ip': None, 'name': None, 'cmd': None}
+                t_dict.update(tp)
+
+                if t_dict['mac']:
+                    try:
+                        mt = self.mac_targets[t_dict['mac']] = Mtargets(**t_dict)
+                        self.add_target(mt)
+                    except Exception as err:
+                        print("Bad target:", tp, err) # sys.stderr
+                        raise
+                else:
+                    print("unknown mac :", tp) # sys.stderr
 
         #
         # Preload from Json status file
@@ -668,7 +734,7 @@ class ArpMon(object):
         jd = self.load_status_json()
         if jd is not None:
             # print("jd[0][time] =", (_start_time - jd[0]['time']))
-            if (_start_time - jd[0]['time']) < 1200:
+            if (_start_time - jd[0]['time']) < 12000:
                 if _verbose:
                     print("PreLoading status_json")
                 for d in jd:
@@ -760,6 +826,11 @@ class ArpMon(object):
         parser.add_argument("--time-away", dest="time_away",
                             type=int,
                             help="away timeout")
+
+
+        parser.add_argument("--no-ipv6", dest="no_ipv6",
+                            type=int,
+                            help="No IPV6")
 
         parser.add_argument("--http-port", '--http_port', dest="http_port",
                             type=int,
@@ -887,6 +958,9 @@ class ArpMon(object):
         if 'time_recheck' in merged_args and merged_args['time_recheck'] is not None:
             self.time_recheck = int(merged_args['time_recheck'])
 
+        if 'no_ipv6' in merged_args:
+            self.no_ipv6 = merged_args['no_ipv6']
+
     #    if upload_config and self.config_file is None:
     #        print("upload option require have config file option")
     #        sys.exit()
@@ -902,6 +976,9 @@ class ArpMon(object):
 
         if self.time_recheck is None:
             self.time_recheck = int(self.time_away/2) - 10
+
+        if self.no_ipv6 is None:
+            self.no_ipv6 = NO_IPV6
 
         # if self.time_var_refresh is None:
         #     self.time_var_refresh = int(self.time_away * 4) + 10
@@ -922,12 +999,14 @@ class ArpMon(object):
         print("log_dir", self.log_dir)
         print("pid_dir", self.pid_dir)
         print("http_port", self.http_port)
+        print("no_ipv6", self.no_ipv6)
 
 
         # redirect_io=1
         # exit(0)
 
 
+    @staticmethod
     def sig_ignore(cursignal, frame):
         """
             ignore signal
