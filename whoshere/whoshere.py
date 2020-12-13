@@ -44,7 +44,14 @@ from http.server import HTTPServer
 
 
 # import scapy.all
-from scapy.all import sniff, conf as _scapy_conf, Ether, ARP, IP, Dot3, IPv6
+from scapy.all import sniff, conf as _scapy_conf, Ether, ARP, IP, Dot3, IPv6, ICMP, ICMPv6EchoRequest, ICMPv6EchoReply
+
+from scapy.contrib.igmp import isValidMCAddr
+from scapy.utils6 import in6_ismaddr,  in6_islladdr
+
+# from scapy.data import IPV6_ADDR_GLOBAL, IPV6_ADDR_LINKLOCAL, \
+#     IPV6_ADDR_SITELOCAL, IPV6_ADDR_LOOPBACK, IPV6_ADDR_UNICAST,\
+#         IPV6_ADDR_MULTICAST, IPV6_ADDR_6TO4, IPV6_ADDR_UNSPECIFIED
 
 
 from .utils import bcast_icmp, bcast_icmp6, upnp_probe
@@ -58,6 +65,9 @@ from .conf import *
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 __author__ = "Peter Shipley"
+
+
+__all__ = ['ArpMon', 'setup_io', 'validate_config']
 
 # isy_conf_path = "/WEB/CONF/mtargets.jsn"
 # STAT_FILE = "/var/www/whoshere-status"
@@ -75,7 +85,7 @@ __author__ = "Peter Shipley"
 # conf_data = None
 _verbose = VERBOSE
 _delta = 0
-_debug = 0
+_debug = 1
 
 _scapy_conf.verb = None
 
@@ -168,7 +178,7 @@ class ArpMon(object):
         if isinstance(mtarg, Mtargets):
             self.mac_targets[mtarg.mac] = mtarg
             if _debug:
-                print("adding target", mtarg.name)
+                print("adding target", mtarg.mac, mtarg.name, len(self.mac_targets))
 #            else:
 #                print("NOT adding target")
 
@@ -178,7 +188,7 @@ class ArpMon(object):
         for c in self.mac_targets.values():
             # print(c.mac, c.ip, c.name, c.is_active, c.last_seen, c.last_change)
             print(time.strftime(TIME_FMT, time.localtime()), \
-                    "\t{:<18} {:<10} {:<16} = {:>2}\t{} {}".format(
+                    "\t{:<18} {:<10} {:<20} = {:>2}\t{} {}".format(
                         c.mac, (c.ip or "-"), c.name, c.is_active,
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_seen)),
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_change))
@@ -195,12 +205,12 @@ class ArpMon(object):
         verbose_time = int(time.time()) + (self.time_away * 8)
         # last_var_ref = int(time.time())
 
-        pcap_filter = "ether src {}".format(" or ".join(self.mac_targets.keys()))
+        pcap_filter = "ether src {}".format(" or ".join(sorted(self.mac_targets.keys())))
 
         print('sniff_loop pid', os.getpid())
 
-        if _debug:
-            print("pcap_filter=", pcap_filter)
+        #if _debug:
+        print("pcap_filter=", pcap_filter)
 
         while True:
             # tcpdump -i em0 -v -v ether src 60:be:b5:ad:28:2d
@@ -240,23 +250,60 @@ class ArpMon(object):
 
         eaddr = None
         ipaddr = None
-        # ip6addr = None
+        ip6addr = None
         # pktinfo = None
-        _pkt_type
+        _pkt_type = None
+        _is_multicast = None
 
         if ARP in pkt and pkt[ARP].op in (1, 2):  # who-has or is-at
             eaddr = pkt[ARP].hwsrc
             ipaddr = pkt[ARP].psrc
+            _pkt_type = "Arp"
+
+        elif ICMP in pkt:
+            eaddr = pkt[Ether].src
+            ipaddr = pkt[IP].src
+            if pkt[ICMP].type == 8:
+                _pkt_type = "ICMP_Echo_Req"
+            elif pkt[ICMP].type == 0:
+                _pkt_type = "ICMP_Echo_Reply"
+            else:
+                _pkt_type = "ICMP"
+
         elif IP in pkt:
             eaddr = pkt[Ether].src
             ipaddr = pkt[IP].src
-        elif Ether in pkt:
+            _is_multicast = isValidMCAddr(ipaddr)
+            if _is_multicast:
+                _pkt_type = "IPmcast"
+            else:
+                _pkt_type = "IP"
+
+        elif ICMPv6EchoReply in pkt:
             eaddr = pkt[Ether].src
-        elif Dot3 in pkt:
-            eaddr = pkt[Dot3].src
+            ip6addr = pkt[IPv6].src
+            _pkt_type = "ICMPv6EchoReply"
+
         elif IPv6 in pkt:
             eaddr = pkt[Ether].src
-            # ip6addr = pkt[IPv6].src
+            ip6addr = pkt[IPv6].src
+
+            if  in6_islladdr(ip6addr):
+                _pkt_type = "IPv6-ll"
+            elif  in6_ismaddr(ip6addr):
+                _is_multicast = 1
+                _pkt_type = "IPv6mcast"
+            else:
+                _pkt_type = "IPv6"
+
+        elif Dot3 in pkt:
+            eaddr = pkt[Dot3].src
+            _pkt_type = "Dot3"
+
+        elif Ether in pkt:
+            eaddr = pkt[Ether].src
+            _pkt_type = "Ether"
+
         else:
             # pkt.show()
             return None
@@ -265,31 +312,36 @@ class ArpMon(object):
             ti = int(time.time())
             time_since = ti - self.mac_targets[eaddr].last_seen
 
+            mtarg = self.mac_targets[eaddr]
+
+            if _pkt_type is not None:
+                mtarg.pkt_type.add(_pkt_type)
+                if mtarg.ipv6 is None and ip6addr is not None and not _is_multicast:
+                    mtarg.ipv6 = ip6addr
+
             # dont react to *every* packet in a row
-            if (time_since > self.time_recheck * 3) or (self.mac_targets[eaddr].is_active < 1):
+            if (time_since > self.time_recheck * 3) or (mtarg.is_active < 1):
                 if not self.mac_targets[eaddr].is_active:
                     self.do_stat_write = True
-                self.mac_targets[eaddr].set_status(1)
+                mtarg.set_status(1)
             else:
-                self.mac_targets[eaddr].last_seen = ti
+                mtarg.last_seen = ti
 
             # check if we do not have a IP for his target
             if ipaddr not in [None, "0.0.0.0", "255.255.255.255"]:
-                if self.mac_targets[eaddr].ip is None:
-                    self.mac_targets[eaddr].ip = ipaddr
+                if mtarg.ip is None:
+                    mtarg.ip = ipaddr
                     t = time.strftime(TIME_FMT, time.localtime())
                     if _verbose > 1 or _debug:
                         print("{}\t{} set_ipaddr  {:<16} : {}".format(
-                            t, self.mac_targets[eaddr].mac, self.mac_targets[eaddr].name,
-                            self.mac_targets[eaddr].ip))
+                            t, mtarg.mac, mtarg.name, mtarg.ip))
 
-                elif self.mac_targets[eaddr].ip != self.mac_targets[eaddr].ip:
-                    self.mac_targets[eaddr].ip = ipaddr
+                elif mtarg.ip != mtarg.ip:
+                    mtarg.ip = ipaddr
                     t = time.strftime(TIME_FMT, time.localtime())
                     if self.verbose > 1 or _debug:
                         print("{}\t{} new_ipaddr  {:<16} : {} -> {}".format(
-                            t, self.mac_targets[eaddr].mac, self.mac_targets[eaddr].name,
-                            self.mac_targets[eaddr].ip, ipaddr))
+                            t, mtarg.mac, mtarg.name, mtarg.ip, ipaddr))
 
         return None
 
@@ -458,18 +510,18 @@ class ArpMon(object):
         if _verbose > 1:
             print("upnp_probe")
         upnp_probe(self.no_ipv6)
-        time.sleep(.30)
+        time.sleep(.10)
 
         if _verbose > 1:
             print("ping bcast")
         bcast_icmp(self.iface)
-        time.sleep(.30)
+        time.sleep(.10)
 
         if not self.no_ipv6:
             if _verbose > 1:
                 print("ping6 bcast")
             bcast_icmp6()
-            time.sleep(.30)
+            time.sleep(.10)
 
         if _debug:
             print("ping each")
@@ -490,7 +542,7 @@ class ArpMon(object):
             else:
                 c.sendarpreq()
 
-            time.sleep(.10)
+        time.sleep(.10)
 
         if _debug:
             print("post")
@@ -511,6 +563,18 @@ class ArpMon(object):
 
             time_now = float(time.time())  # int(time.time())
             strtm = time.strftime(TIME_FMT, time.localtime())
+
+            if _verbose > 1:
+                print("ping bcast")
+            bcast_icmp(self.iface)
+
+            if not self.no_ipv6:
+                time.sleep(.10)
+                if _verbose > 1:
+                    print("ping6 bcast")
+                bcast_icmp6()
+
+            time.sleep(.20)
 
             for c in self.mac_targets.values():
 
@@ -696,7 +760,9 @@ class ArpMon(object):
             print(self.target_data)
             exit(0)
 
-        target_list = json.loads(self.target_data)
+        target_list = json.loads(self.target_data.encode('utf-8'))
+        if _debug:
+            print("target_list : ", len(target_list))
 
         # Old  [ "10.1.1.105", "dc:0b:34:b1:cc:5f", "is_home" ]
         # loop through config, skipping errors if possible
@@ -706,7 +772,7 @@ class ArpMon(object):
                 if tp[1] is not None:
                     try:
                         mt = self.mac_targets[tp[1]] = Mtargets(mac=tp[1], ip=tp[0], name=tp[2])
-                        self.add_target(mt)
+                        ## self.add_target(mt)
 
                     except Exception as err:
                         print("Bad target:", tp, err) # sys.stderr
@@ -714,12 +780,15 @@ class ArpMon(object):
 
                 else:
                     print("unknown mac :", tp) # sys.stderr
+                 ## print("self.mac_targets =", self.mac_targets)
             elif isinstance(tp, dict):
                 t_dict = {'mac': None, 'ip': None, 'name': None, 'cmd': None}
                 t_dict.update(tp)
 
                 if t_dict['mac']:
                     try:
+                        ## print("adding as dict", t_dict['mac'])
+
                         mt = self.mac_targets[t_dict['mac']] = Mtargets(**t_dict)
                         self.add_target(mt)
                     except Exception as err:
@@ -727,6 +796,10 @@ class ArpMon(object):
                         raise
                 else:
                     print("unknown mac :", tp) # sys.stderr
+
+
+        ## print("self.mac_targets A", len(self.mac_targets))
+        ## print("self.mac_targets A", self.mac_targets)
 
         #
         # Preload from Json status file
@@ -739,12 +812,19 @@ class ArpMon(object):
                     print("PreLoading status_json")
                 for d in jd:
                     if 'mac' in d:
-                        m = d['mac']
+                        m = d['mac'].encode('utf-8')
+                        ## print("m = ", m, len(self.mac_targets) )
                         if m in self.mac_targets:
+                            ## print("m = ", m, "merge", len(self.mac_targets))
                             self.mac_targets[m].last_change = d['last_change']
+                            self.mac_targets[m].prev_change = d.get('prev_change', 0)
+                            self.mac_targets[m].prev2_change = d.get('prev2_change', 0)
                             self.mac_targets[m].last_seen = d['last_seen']
                             self.mac_targets[m].is_active = d.get('stat', -1)
                             self.mac_targets[m].time_away = d.get('time_away', 0)
+                            self.mac_targets[m].pkt_type = set()
+                            ## print("m = ", m, "merged", len(self.mac_targets))
+                            # self.mac_targets[m].pkt_type = set( d.get("pkt_type", "").split())
     #       else:
     #           print("Not Loading status_json", (_start_time - jd[0]['time']))
     #    else:
@@ -752,10 +832,15 @@ class ArpMon(object):
 
         if _verbose > 1:
             # print("Target Macs", " ".join(mac_targets.keys()))
-            for c in self.mac_targets.values():
-                print("mac_targets = {:<4}: {:<19}{:<5}".format(" ", c.name, c.is_active))
+            #for c in self.mac_targets.values():
+            #    print("mac_targets = {:<4}: {:<19}{:<5}".format(c.mac, c.name, c.is_active))
+            for k in self.mac_targets.keys():
+                print("mac_targets = {:<4}: {:<19}{:<5}".format(self.mac_targets[k].mac, self.mac_targets[k].name, self.mac_targets[k].is_active))
 
             self.print_status_all()
+
+        ## print("self.mac_targets B", len(self.mac_targets))
+        ## print("self.mac_targets B", self.mac_targets)
 
         sys.stdout.flush()
 
@@ -775,7 +860,7 @@ class ArpMon(object):
                     conf_dat = confd.read()
                 print("get_conf: read", target_file)
             print("get_conf: data : ", conf_dat)
-            return conf_dat
+            return conf_dat.encode('utf-8')
         except ValueError as ve:
             print("Load Error :", ve)
             print(conf_dat)
@@ -1072,7 +1157,7 @@ def setup_io(am):
     signal.signal(signal.SIGINT, am._sig_exit_gracefully)
 #    signal.signal(signal.SIGTERM, am._sig_exit_gracefully)
 #    signal.signal(signal.SIGUSR1, sig_print_status)
-#    signal.signal(signal.SIGUSR2, am._sig_refresh_statfile)
+    signal.signal(signal.SIGUSR2, am._sig_refresh_statfile)
     if am.verbose:
         print("init", sys.hexversion, WHOSHERE_VER)
         print("setup_io : redirect_io : ", am.redirect_io)
@@ -1157,8 +1242,8 @@ def setup_io(am):
         print("verbose=\t{}".format(_verbose), am.args['verbose'])
         print("delta=\t{}".format(_delta))
         print("pid=\t{}".format(os.getppid()))
-
-        print("config_file", am.config_file)
+        print("statfile=\t{}".format(am.stat_file))
+        print("config_file={}".format(am.config_file))
         sys.stdout.flush()
 
     return

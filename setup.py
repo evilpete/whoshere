@@ -14,7 +14,7 @@ import ssl
 
 from distutils.core import setup
 
-version = '0.1.20181223'
+version = '0.1.20201204'
 
 setup(
     name='whoshere',
@@ -31,7 +31,7 @@ setup(
     description='Monitor hosts on local lan.',
     # long_description=open('README.txt').read(),
     # cmdclass = { 'install_scripts': install_scripts_and_symlinks }
-    install_requires=['scapy', 'requests'],
+    install_requires=['scapy', 'requests', 'future', 'Isylib'],
     entry_points={
           'console_scripts': [
               # 'whoshere-isy = whoshere.whoshere_isy:main',

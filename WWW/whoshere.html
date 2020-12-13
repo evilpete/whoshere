@@ -42,13 +42,35 @@ body {
 
     var next_load = 0;
     var data_age = 0;
+    var sort_mac_rev = false;
+    var sort_stat_rev = true;
+
+     // https://html-online.com/articles/get-url-parameters-javascript/
+     function getUrlVars() {
+         var vars = {};
+         var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+             vars[key] = value;
+         });
+         return vars;
+     }
 
     function do_all() {
 
         status_data = jdata[0];
         targ_data = jdata.slice(1,);
+        arg_vars = getUrlVars();
+        sort_method = arg_vars["sortby"];
+        sort_rev =  arg_vars["rev"];
+        
+        if ( sort_rev == 'true')  {
+            sort_rev = true
+        } else {
+            sort_rev = false
+        }
 
-        // console.log("do_all targ_data :" + targ_data.length  + targ_data);
+        console.log("sort_method :" + sort_method);
+        console.log("sort_rev :" + sort_rev);
+        console.log("location.search :" + location.search);
 
         var dtime = Date.now() / 1000;
 
@@ -73,7 +95,32 @@ body {
 
             }
         }
-        do_report();
+
+        switch(sort_method) {
+            case 'mac':
+                sort_mac_rec = sort_rev
+                sort_mac()
+                break;
+            case 'stat':
+                sort_stat_rec = sort_rev
+                sort_stat()
+                break;
+            case 'name':
+                sort_name_rev = sort_rev
+                sort_name()
+                break;
+            case 'seen':
+                sort_seen_rev = sort_rev
+                sort_seen()
+                break;
+            case 'sort_change':
+                sort_change_rev = sort_rev
+                sort_change()
+                break;
+            default:
+                do_report();
+                break;
+        }
     }
 
     //
@@ -81,6 +128,7 @@ body {
     //
 
     var sort_by = function(field, reverse, primer){
+        // console.log('sort_by ' + field + ' ' + reverse);
         var key = primer ?
             function(x) {return primer(x[field])} :
             function(x) {return x[field]};
@@ -94,23 +142,25 @@ body {
 
     function lc(s) { return s.toString().toLowerCase(); }
 
-    sort_mac_rev = true;
     function sort_mac() {
+        sort_method = 'mac'
         targ_data.sort(sort_by('mac', sort_mac_rev, lc));
         if (sort_mac_rev) { sort_mac_rev = false; } else { sort_mac_rev = true; }
         do_report()
     }
 
-    sort_stat_rev = true;
     function sort_stat() {
+        sort_method = 'stat'
         targ_data.sort(sort_by('stat', sort_stat_rev, parseInt));
         if (sort_stat_rev) { sort_stat_rev = false; } else { sort_stat_rev = true; }
+        // location.search = '?sortby=stat&rev=' + sort_stat_rev
         do_report()
     }
 
     sort_name_rev = false;
     function sort_name() {
         // console.log('#sort_name ' + sort_name_rev);
+        sort_method = 'name'
         targ_data.sort(sort_by('name', sort_name_rev, lc));
         if (sort_name_rev) { sort_name_rev = false; } else { sort_name_rev = true; }
         do_report()
@@ -118,6 +168,7 @@ body {
 
     sort_seen_rev = true;
     function sort_seen() {
+        sort_method = 'seen'
         targ_data.sort(sort_by('last_seen', sort_seen_rev, parseInt));
         if (sort_seen_rev) { sort_seen_rev = false; } else { sort_seen_rev = true; }
         do_report()
@@ -125,6 +176,7 @@ body {
 
     sort_change_rev = true;
     function sort_change() {
+        sort_method = 'change'
         targ_data.sort(sort_by('last_change', sort_change_rev, parseInt));
         if (sort_change_rev) { sort_change_rev = false; } else { sort_change_rev = true; }
         do_report();
@@ -145,6 +197,7 @@ body {
         }
 
         ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+        // ret += "" + secs.last_seeng n.substr(-2);
         ret += "" + secs.toString().substr(-2);
         return ret;
     }

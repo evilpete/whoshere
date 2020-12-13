@@ -69,6 +69,8 @@ class webHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', mimetype)
             self.send_header('Cache-Control', "max-age=30, Private")
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Connection', 'close')
             # if self.chunked
             #    self.send_header('Transfer-Encoding': "chunked")
             self.send_header('Content-Length', len(jdata))
@@ -81,7 +83,7 @@ class webHandler(BaseHTTPRequestHandler):
                 # else:
                 self.wfile.write(jdata)
 
-        except select.error as se:
+        except select.error as _se:
             self.send_error(503, 'Service Unavailable')
 
 #    def log_message(self, format, *args):

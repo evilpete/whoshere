@@ -1,4 +1,3 @@
-#!/usr/bin/python2.7
 """
     whoshere with callbacks for
     is a example program that can me used to set State Variables in a ISY standalone home automation controller.
@@ -68,7 +67,7 @@ def isy_upload_conf(cur_file, isy_path):
     print("ISY path = {}".format(isy_path))
     with open(cur_file) as confd:
         try:
-            cur_data = confd.read()
+            cur_data = confd.read().encode('utf-8')
             # target_data = json.loads(cur_data)
         except Exception as err:
             print("json error: ", err)
@@ -116,8 +115,8 @@ def download_conf(config_path=None):
     conf_data = None
     try:
         conf_data = myisy.soapcomm("GetSysConf", name=config_path)
-        if verbose:
-            print("Downloaded config_file:", myisy.addr, config_path)
+        # if verbose:
+        print("Downloaded config_file:", myisy.addr, config_path)
         return conf_data
     except ValueError as ve:
         print("Load Error :", ve)
@@ -204,8 +203,8 @@ if __name__ == '__main__':
     last_reload = int(time.time())
 
     conf_dat = download_conf(ISY_CONF_PATH)
-    if verbose > 1:
-        print("download_conf(ISY_CONF_PATH)", conf_dat)
+    # if verbose > 1:
+    print("download_conf(ISY_CONF_PATH)", conf_dat)
     # if conf_dat is not None:
     #    fp = io.BytesIO(conf_dat)
 
@@ -214,6 +213,9 @@ if __name__ == '__main__':
     ag = parse_localargs()
     arpmon.args.update(ag)
     verbose = arpmon.verbose
+
+    # debug
+    print(ag)
 
 #    if verbose:
 #        print('whoshere:', whoshere._file__)
@@ -228,15 +230,17 @@ if __name__ == '__main__':
         do_uploads(arpmon)
         exit(0)
 
-    targ_dat = download_conf(ISY_TARG_PATH)
+    targ_dat = download_conf(ISY_TARG_PATH).encode('utf-8')
     # upload_config = False
-    if verbose > 1:
-        print("downloaded targ config :", targ_dat)
+    # if verbose > 1:
+    print("downloaded targ config :", targ_dat)
 
     # if verbose:
     #     print("arpmon.args :", type(arpmon.args))
 
     arpmon.load_targets(target_dat=targ_dat)
+
+    ## print("arpmon.mac_targets C", arpmon.mac_targets)
 
     if verbose > 1:
         print("arpmon.redirect_io", arpmon.redirect_io)
