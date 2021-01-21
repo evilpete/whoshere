@@ -2,7 +2,7 @@
 
 TIME_FMT = "%Y-%m-%d %H:%M:%S"
 
-WHOSHERE_VER = "0.1.20201204"
+WHOSHERE_VER = "0.1.20210102"
 
 STAT_FILE = "/var/www/local/whoshere-status"
 WWW_PATH = "/var/www/local"
@@ -14,7 +14,9 @@ CONFIG_FILE = "whoshere.ini"
 TARGET_FILE = "mtargets.json"
 IFACE = "eth0"  # eth0 em0
 HTTP_PORT_NUMBER = None # 8088
+WIFI_MONDEV = 'mon0'
 
+PKT_CNT = 1
 
 SNIFF_TIMEOUT = 60 * 16
 TIME_FMT = "%Y-%m-%d %H:%M:%S"

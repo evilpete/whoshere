@@ -39,8 +39,9 @@ from configparser import SafeConfigParser as ConfigParser
 
 from threading import Thread, current_thread
 # from BaseHTTPServer import HTTPServer
+from BaseHTTPServer import HTTPServer
 # from http.server import BaseHTTPRequestHandler, HTTPServer
-from http.server import HTTPServer
+# from http.server import HTTPServer
 
 
 # import scapy.all
@@ -54,9 +55,10 @@ from scapy.utils6 import in6_ismaddr,  in6_islladdr
 #         IPV6_ADDR_MULTICAST, IPV6_ADDR_6TO4, IPV6_ADDR_UNSPECIFIED
 
 
-from .utils import bcast_icmp, bcast_icmp6, upnp_probe
+from .utils import bcast_icmp, bcast_icmp6, upnp_probe, bcast_arp
 from .webhandler import webHandler
 from .mtargets import Mtargets
+from .wifi_handler import scan_wifi_loop
 
 from .conf import *
 
@@ -89,6 +91,9 @@ _debug = 1
 
 _scapy_conf.verb = None
 
+import scapy
+print("scapy", scapy.__file__)
+# print("scapy", scapy._version())
 
 # myisy = None
 # isy_var = None
@@ -117,7 +122,9 @@ class ArpMon(object):
     log_dir = LOG_DIR
     pid_dir = PID_DIR
     iface = IFACE
+    wifi_mondev = WIFI_MONDEV
     no_ipv6 = NO_IPV6
+    pkt_cnt = PKT_CNT
 
     defaults = {
         'time_away': TIME_AWAY_DEFAULT,
@@ -130,6 +137,8 @@ class ArpMon(object):
         'http_port': HTTP_PORT_NUMBER,
         'verbose': VERBOSE,
         'no_ipv6': NO_IPV6,
+        'wifi_mondev': WIFI_MONDEV,
+        'pkt_cnt': PKT_CNT,
     }
 
     def __init__(self, **kargs):
@@ -143,9 +152,11 @@ class ArpMon(object):
         self.args.update(ArpMon.defaults)
 
         self.sniff_thread = None
+        self.wifi_thread = None
         self.ping_thread = None
         self.http_thread = None
         self.http_port = None
+        self.sniffing = None
 
         self.last_write = 0
         self.do_stat_write = 0
@@ -171,6 +182,7 @@ class ArpMon(object):
         # self.time_var_refresh = None
         self.sniff_timeout = None
 
+        self.pkt_cnt = None
         self.no_ipv6 = None
 
     def add_target(self, mtarg):
@@ -188,7 +200,7 @@ class ArpMon(object):
         for c in self.mac_targets.values():
             # print(c.mac, c.ip, c.name, c.is_active, c.last_seen, c.last_change)
             print(time.strftime(TIME_FMT, time.localtime()), \
-                    "\t{:<18} {:<10} {:<20} = {:>2}\t{} {}".format(
+                    "\t{:<18} {:<11} {:<20} = {:>2}\t{} {}".format(
                         c.mac, (c.ip or "-"), c.name, c.is_active,
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_seen)),
                         time.strftime("%H:%M:%S %Y%m%d", time.localtime(c.last_change))
@@ -210,8 +222,10 @@ class ArpMon(object):
         print('sniff_loop pid', os.getpid())
 
         #if _debug:
+        print("pcap_filter len", len(pcap_filter))
         print("pcap_filter=", pcap_filter)
 
+        self.sniffing = True
         while True:
             # tcpdump -i em0 -v -v ether src 60:be:b5:ad:28:2d
             try:
@@ -261,14 +275,23 @@ class ArpMon(object):
             _pkt_type = "Arp"
 
         elif ICMP in pkt:
-            eaddr = pkt[Ether].src
-            ipaddr = pkt[IP].src
-            if pkt[ICMP].type == 8:
-                _pkt_type = "ICMP_Echo_Req"
-            elif pkt[ICMP].type == 0:
+
+            if pkt[ICMP].type == 0:
                 _pkt_type = "ICMP_Echo_Reply"
-            else:
-                _pkt_type = "ICMP"
+                if pkt[ICMP].load.startswith("whoshere"):
+                    a = pkt[ICMP].load.split()
+                    # print("a=", a)
+                    # sys.stdout.flush()
+                    eaddr = a[1]
+                    ipaddr = a[2]
+                else:
+                    eaddr = pkt[Ether].src
+                    ipaddr = pkt[IP].src
+
+            elif pkt[ICMP].type == 8:
+                _pkt_type = "ICMP_Echo_Req"
+                eaddr = pkt[Ether].src
+                ipaddr = pkt[IP].src
 
         elif IP in pkt:
             eaddr = pkt[Ether].src
@@ -347,6 +370,9 @@ class ArpMon(object):
 
     def run(self):
         # type: () -> None
+
+        print("run")
+
         self.start_pingloop()
 
         if _verbose:
@@ -359,6 +385,9 @@ class ArpMon(object):
 
         if isinstance(self.http_port, (int)) and self.http_port > 1:
             self.start_http()
+
+        if self.wifi_mondev:
+            self.start_wifiloop()
 
         # self.start_blueloop()
 
@@ -379,6 +408,7 @@ class ArpMon(object):
     def start_pingloop(self):
         # type: () -> None
 
+        print("start_pingloop Thread")
         self.ping_thread = Thread(target=self.ping_loop, name="ping_looper")
         self.ping_thread.daemon = True
         self.ping_thread.start()
@@ -411,6 +441,20 @@ class ArpMon(object):
                   "\tstart_server() http_server:", \
                   self.http_thread.name, current_thread().name)
 
+    def start_wifiloop(self):
+        # type: () -> None
+
+        self.wifi_thread = Thread(target=scan_wifi_loop, name="wifi_looper", args=[self])
+        self.wifi_thread.daemon = True
+        self.wifi_thread.start()
+        if self.verbose > 1:
+            print(time.strftime(TIME_FMT, time.localtime()), \
+                     "\tstart_wifiloop() wifi_thread:", \
+                      self.wifi_thread.name, current_thread().name)
+
+
+
+
     def http_server(self, am):
         # type: () -> None
 
@@ -419,6 +463,7 @@ class ArpMon(object):
         server = HTTPServer(('', self.http_port), webHandler)
         if self.verbose:
             print('Started httpserver on port {} pid {}'.format(self.http_port, os.getpid()))
+            sys.stdout.flush()
         while True:
             try:
                 server.serve_forever()
@@ -459,6 +504,11 @@ class ArpMon(object):
                 # self.start_http()
                 break
 
+            if self.wifi_thread is not None and not self.wifi_thread.is_alive():
+                print(time.strftime(TIME_FMT, time.localtime()),
+                      "\twifi_thread thread died", self.wifi_thread)
+                # self.start_wifiloop()
+                break
 
             if _verbose or _debug:
                 if verbose_print_status_time < time_now:
@@ -466,10 +516,10 @@ class ArpMon(object):
                     self.print_status_all()
 
             if (time_now >= (self.last_write + self.sniff_timeout)) or self.do_stat_write:
-                self.do_stat_write = False
                 if _verbose > 1  or _debug:
                     print(time.strftime(TIME_FMT, time.localtime()), "\twatch_threads :", \
                         (time_now - (self.last_write + self.sniff_timeout)), self.do_stat_write)
+                self.do_stat_write = False
                 self.write_status_json()
                 self.last_write = time_now
 
@@ -492,60 +542,113 @@ class ArpMon(object):
 
         """
 
-        time.sleep(5)
+        print("ping_loop")
 
-        if _verbose > 1:
+        # wait till sniffing starts
+        for x in range(40):
+            if self.sniffing:
+                break
+            time.sleep(.1)
+
+        time.sleep(.5)
+
+        if self.verbose > 1:
             print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop init", current_thread().name)
             print('ping_loop pid', os.getpid())
-            sys.stdout.flush()
 
-        if _debug:
+        if _debug or self.verbose:
             print("self pre")
+            sys.stdout.flush()
 
         time_now = float(time.time())  # int(time.time())
 
         # print_status_all()
 
         # a couple quick one time broadcasts
-        if _verbose > 1:
+        if self.verbose > 1:
             print("upnp_probe")
-        upnp_probe(self.no_ipv6)
-        time.sleep(.10)
+        upnp_probe(self.no_ipv6, iface=self.iface, cnt=self.pkt_cnt)
+        time.sleep(.05)
 
-        if _verbose > 1:
+        if self.verbose > 1:
             print("ping bcast")
-        bcast_icmp(self.iface)
-        time.sleep(.10)
+        bcast_icmp(iface=self.iface, cnt=self.pkt_cnt)
+        time.sleep(.05)
+
+        if self.verbose > 1:
+            print("arp bcast")
+        bcast_arp(iface=self.iface, cnt=self.pkt_cnt)
+        time.sleep(.05)
 
         if not self.no_ipv6:
-            if _verbose > 1:
+            if self.verbose > 1:
                 print("ping6 bcast")
-            bcast_icmp6()
-            time.sleep(.10)
+            bcast_icmp6(iface=self.iface, cnt=self.pkt_cnt)
 
-        if _debug:
+        time.sleep(.10)
+
+        if _debug or self.verbose:
             print("ping each")
+            sys.stdout.flush()
+
+        # Ping inactive hosts
         for c in self.mac_targets.values():
+
+            if c.ignore or c.skip:
+                continue
+
+            if c.is_active:
+                continue
+
+            if self.verbose > 1:
+                print("ping", c.mac, c.ip)
 
             if c.mac_type != 'ether':
                 continue
 
-            if c.last_seen > time_now:
+            if c.last_seen >= time_now:
+                if self.verbose > 1:
+                    print("ping br 1")
                 continue
 
-            if c.ip is None:
-                # c.sendicmp()
+            if c.ip is not None:
+                if self.verbose > 2:
+                    print("sendicmp")
+                if not c.noping:
+                    c.sendicmp(iface=self.iface, cnt=self.pkt_cnt)
+                    time.sleep(.02)
+
+                if c.last_seen >= time_now:
+                    if self.verbose > 2:
+                        print("ping br 2")
+                    continue
+
+            if c.ip is not None:
+                if self.verbose > 2:
+                    print("sendarpreq")
+                if not c.noarp:
+                    c.sendarpreq(iface=self.iface, cnt=self.pkt_cnt)
                 # icmp_a, icmp_u = icmp_ping("255.255.255.255", c.mac)
-                pass
-                if not self.no_ipv6:
-                    c.sendip6ping()
-            else:
-                c.sendarpreq()
 
-        time.sleep(.10)
+            if c.last_seen >= time_now:
+                if self.verbose > 2:
+                    print("ping br 3")
+                continue
 
-        if _debug:
-            print("post")
+            if not self.no_ipv6:
+                if not c.noping:
+                    c.sendip6ping(iface=self.iface, cnt=self.pkt_cnt)
+                    time.sleep(.02)
+
+            if self.verbose > 2:
+                print("next")
+                sys.stdout.flush()
+
+        # time.sleep(.10)
+
+        if _debug or self.verbose:
+            print("post init ping")
+            sys.stdout.flush()
 
         self.print_status_all()
 
@@ -553,44 +656,76 @@ class ArpMon(object):
         self.last_write = int(time_now)
         self.do_stat_write = False
 
-        if _verbose > 1:
+        if self.verbose:
             print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop start")
+            sys.stdout.flush()
 
         while True:
 
+            if self.verbose > 1:
+                print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop while True")
+
             sys.stdout.flush()
-            time.sleep(self.time_sleep)
 
             time_now = float(time.time())  # int(time.time())
             strtm = time.strftime(TIME_FMT, time.localtime())
 
-            if _verbose > 1:
-                print("ping bcast")
-            bcast_icmp(self.iface)
+            # Make broadcast Arp...
+
+            # if self.verbose > 1:
+            #     print("ping bcast")
+            # bcast_icmp(self.iface, cnt=self.pkt_cnt)
+
+            if self.verbose > 1:
+                print("ping arp")
+            bcast_arp(iface=self.iface, cnt=self.pkt_cnt)
 
             if not self.no_ipv6:
-                time.sleep(.10)
-                if _verbose > 1:
+                time.sleep(.02)
+                if self.verbose > 1:
                     print("ping6 bcast")
                 bcast_icmp6()
 
-            time.sleep(.20)
+            time.sleep(.04)
 
+            if self.verbose > 1:
+                print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop last_seen")
+
+            sys.stdout.flush()
+
+            # ping host that have not been seen in self.time_recheck
             for c in self.mac_targets.values():
 
                 if c.mac_type != 'ether':
                     continue
 
+                if c.ignore or c.skip:
+                    continue
+
+                if time_now < c.last_seen:
+                    continue
+
                 time_since = time_now - c.last_seen
                 if time_since >= self.time_recheck:
                     if c.ip is None:
-                        if not self.no_ipv6:
+                        if not self.no_ipv6 and not c.noping:
                             c.sendip6ping()
                     else:
-                        c.sendarpreq()
-                    time.sleep(.10)
+                        if not c.noarp:
+                            c.sendarpreq()
+                    # time.sleep(.05)
+
+                    if time_now > c.last_seen:
+                        if not c.noping:
+                            c.sendicmp(iface=self.iface, cnt=self.pkt_cnt)
 
 
+            if self.verbose:
+                print(time.strftime(TIME_FMT, time.localtime()), "\tping_loop expire")
+
+            sys.stdout.flush()
+
+            # mark status 0
             for c in self.mac_targets.values():
 
                 if c.is_active == 0:
@@ -602,7 +737,7 @@ class ArpMon(object):
 
                 # time_since >= self.time_away:
                 if time_since >= t_away:
-                    if _verbose > 1 and c.ip is None:
+                    if self.verbose > 1 and c.ip is None:
                         print("{}\tping_loop: time_since >= time_away, last_seen = {}".format(
                             strtm,
                             time.strftime(TIME_FMT, time.localtime(c.last_seen))))
@@ -620,6 +755,10 @@ class ArpMon(object):
                 self.write_status_json()
                 self.last_write = time_now
 
+            if self.verbose > 1:
+                print("ping_loop sleep")
+
+            time.sleep(self.time_sleep)
 #
 # time_sleep  ping_loop sleep time
 # time_recheck    = time since last packet before using arping
@@ -770,9 +909,23 @@ class ArpMon(object):
             # check that macaddr is given
             if isinstance(tp, list):
                 if tp[1] is not None:
+                    if tp[0] == "IGNORE":
+                        continue
+
                     try:
                         mt = self.mac_targets[tp[1]] = Mtargets(mac=tp[1], ip=tp[0], name=tp[2])
                         ## self.add_target(mt)
+
+                        if len(tp) > 3:
+                            if 'NOPING' in tp:
+                                mt.noping = True
+                            if 'IGNORE' in tp:
+                                mt.ignore = True
+                            if 'NOARP' in tp:
+                                mt.noarp = True
+                            if 'SKIP' in tp:
+                                mt.skip = True
+                                
 
                     except Exception as err:
                         print("Bad target:", tp, err) # sys.stderr
@@ -782,7 +935,7 @@ class ArpMon(object):
                     print("unknown mac :", tp) # sys.stderr
                  ## print("self.mac_targets =", self.mac_targets)
             elif isinstance(tp, dict):
-                t_dict = {'mac': None, 'ip': None, 'name': None, 'cmd': None}
+                t_dict = {'mac': None, 'ip': None, 'name': None, 'cmd': None, 'ignore': False, 'skip': False}
                 t_dict.update(tp)
 
                 if t_dict['mac']:
@@ -790,7 +943,7 @@ class ArpMon(object):
                         ## print("adding as dict", t_dict['mac'])
 
                         mt = self.mac_targets[t_dict['mac']] = Mtargets(**t_dict)
-                        self.add_target(mt)
+                        # self.add_target(mt)
                     except Exception as err:
                         print("Bad target:", tp, err) # sys.stderr
                         raise
@@ -807,7 +960,7 @@ class ArpMon(object):
         jd = self.load_status_json()
         if jd is not None:
             # print("jd[0][time] =", (_start_time - jd[0]['time']))
-            if (_start_time - jd[0]['time']) < 12000:
+            if True:  # (_start_time - jd[0]['time']) < 12000:
                 if _verbose:
                     print("PreLoading status_json")
                 for d in jd:
@@ -934,6 +1087,10 @@ class ArpMon(object):
                             action='store_true',
                             help="Print Config and Exit")
 
+        parser.add_argument("--cnt", dest="pkt_cnt",
+                            type=int,
+                            help="number of pkts per ping")
+
         args, _ = parser.parse_known_args()
 
         return args
@@ -1045,6 +1202,10 @@ class ArpMon(object):
 
         if 'no_ipv6' in merged_args:
             self.no_ipv6 = merged_args['no_ipv6']
+
+        if 'pkt_cnt' in merged_args and merged_args['pkt_cnt'] is not None:
+            self.pkt_cnt = int(merged_args['pkt_cnt'])
+
 
     #    if upload_config and self.config_file is None:
     #        print("upload option require have config file option")
@@ -1244,6 +1405,7 @@ def setup_io(am):
         print("pid=\t{}".format(os.getppid()))
         print("statfile=\t{}".format(am.stat_file))
         print("config_file={}".format(am.config_file))
+        print("pkt_cnt={}".format(am.pkt_cnt))
         sys.stdout.flush()
 
     return

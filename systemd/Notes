@@ -1,0 +1,5 @@
+
+systemctl enable whoshere-isy 
+service whoshere-isy restart
+systemctl status whoshere-isy.service
+systemctl daemon-reload

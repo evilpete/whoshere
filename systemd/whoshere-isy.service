@@ -1,0 +1,21 @@
+[Unit]
+Description=Whoshere Daemon
+After=syslog.target network-online.target
+
+[Service]
+User=root
+Group=root
+
+PIDFile=/var/run/whoshere/whoshere.pid
+
+ExecStartPre=-/bin/mkdir -p /var/run/whoshere 
+ExecStartPre=-/bin/mkdir -p /var/log/whoshere
+Type=simple
+ExecStart=/usr/local/bin/whoshere-isy.py -r -v
+TimeoutStopSec=10
+RestartSec=5s
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

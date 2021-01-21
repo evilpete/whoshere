@@ -7,4 +7,4 @@ from .whoshere import *
 from .utils import *
 
 
-__all__ = ['ArpMon', 'MTarget']
+__all__ = ['ArpMon', 'MTargets']

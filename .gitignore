@@ -4,6 +4,7 @@ whoshere-0*
 whoshere-main.py
 whoshere-iftt-local.py
 .pylintrc
+.screen_shots/
 isylib.cfg
 .isylib.cfg
 mtargets.json
@@ -18,10 +19,23 @@ tt.py
 test.*
 Sav/*
 Bak/*
-*bak
+
+*-test.py
+
+ref-code
+
+*--
+*-bak
+*.bak
+*-sav
+*.sav
+*.sav-dev
 
 # C extensions
 *.so
+
+files.txt
+files-0.1.20*.txt
 
 # Packages
 *.egg

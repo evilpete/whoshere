@@ -49,6 +49,11 @@ class Mtargets(object):
         # else:
         #     self.mac_type = 'ether'
 
+        self.skip = kargs.get('skip', False)
+        self.ignore = kargs.get('ignore', False)
+        self.noarp = kargs.get('noarp', False)
+        self.noping = kargs.get('noping', False)
+
         self.cmd = kargs.get('cmd', None)
 
         self.ip = kargs.get('ip', None)
@@ -85,6 +90,9 @@ class Mtargets(object):
 
         time_now = time.time()
         strtm = time.strftime(TIME_FMT, time.localtime(time_now))
+
+        if self.skip and state >= 1:
+            self.skip = False
 
         if self.is_active == -1 and self.last_seen < 1:
             time_since = 0 # time_now - int(_start_time)
@@ -154,7 +162,7 @@ class Mtargets(object):
 #        return (ans, unans)
 #    # http://www.secdev.org/projects/scapy/doc/usage.html
 
-    def sendip6ping(self):
+    def sendip6ping(self, iface="eth0", cnt=1):
         # type: () -> None
         """
             send a IPv6 Icmp Ping
@@ -174,7 +182,10 @@ class Mtargets(object):
 
             if self._verbose > 1:
                 print("sendip6ping:", _addr6, self.name)
-            sendp(Ether(dst=self.mac)/IPv6(dst=_addr6, hlim=0)/ICMPv6EchoRequest()/"whosthere", iface="eth0", count=2)
+            # payload="whothere " + _addr6
+            payload=str("whoshere " + self.mac + " " + _addr6 + " " + self.name).encode('utf-8')
+            sendp(Ether(dst=self.mac)/IPv6(dst=_addr6, hlim=0)/ICMPv6EchoRequest()/payload, iface=iface, count=cnt)
+            # send(IPv6(dst=_addr6, hlim=0)/ICMPv6EchoRequest()/"whoshere", iface=iface, count=2)
             ## https://www.packetlevel.ch/html/scapy/scapyipv6.html
             # i = IPv6()
             # i.dst = self.linklocal
@@ -184,7 +195,7 @@ class Mtargets(object):
             ## pkt = (Ether(dst=self.mac)/i/q)
             ## sendp(pkt, iface="eth0")
 
-    def sendarpreq(self):
+    def sendarpreq(self, iface="eth0", cnt=1):
         # type: () -> None
         """
             send a arp request
@@ -196,9 +207,9 @@ class Mtargets(object):
         if self._verbose > 1:
             print("sendarpreq:", self.ip, self.name)
         if self.ip is not None:
-            send(ARP(op=ARP.who_has, pdst=self.ip), iface="eth0")
+            send(ARP(op=1, pdst=self.ip), iface=iface, count=cnt)
 
-    def sendicmp(self):
+    def sendicmp(self, iface="eth0", cnt=1):
         # type: () -> None
         """
             send a ICMP ping request packet ( IP 4 )
@@ -213,10 +224,13 @@ class Mtargets(object):
             return
 
         if self._verbose > 1:
-            print("sendicmp: ", self.mac, self.ip, self.name)
-        sendp(Ether(dst=self.mac)/IP(dst=self.ip)/ICMP()/"whosthere", count=2)
+            print("sendicmp: ", self.mac, self.ip, self.name, iface)
 
-    def icmp_ping(self):
+        payload=str("whoshere " + self.mac + " " + self.ip + " " + self.name).encode('utf-8')
+        # sendp(Ether(dst=self.mac)/IP(dst=self.ip)/ICMP()/"whoshere", iface=iface, count=cnt)
+        send(IP(dst=self.ip)/ICMP()/payload, iface=iface, count=cnt)
+
+    def icmp_ping(self, iface="eth0", cnt=1):
         # type: () -> None
         """
             send a ICMP ping request packet ( IP 4 )
@@ -229,10 +243,11 @@ class Mtargets(object):
         if self.ip is None:
             return (None, None)
 
-        if self.mac is None:
-            ans, unans = sr(IP(dst=self.ip)/ICMP()/"whosthere", timeout=2)
-        else:
-            ans, unans = srp(Ether(dst=self.mac)/IP(dst=self.ip)/ICMP()/"whosthere", timeout=2)
+        payload=str("whoshere " + self.mac + " " + self.ip + " " + self.name).encode('utf-8')
+        # if self.mac is None:
+        ans, unans = sr(IP(dst=self.ip)/ICMP()/payload, iface=iface, timeout=2, count=cnt)
+        # else:
+        #     ans, unans = srp(Ether(dst=self.mac)/IP(dst=self.ip)/ICMP()/"whoshere", iface=iface, timeout=2)
 
         if self._verbose > 1:
             print("icmp_ping: ", self.ip, " ans = ", len(ans), ", unans = ", len(unans))
@@ -257,11 +272,15 @@ class Mtargets(object):
                 'mac_type' : self.mac_type,
                 'ipv6': (self.ipv6 or ""),
                 'pkt_type': " ".join(sorted(self.pkt_type)),
+                'ignore': self.ignore,
+                'noarp': self.noarp,
+                'noping': self.noping,
+                'skip': self.skip,
                }
 
     def __str__(self):
         # type: () -> str
-        return " ".join([self.mac, (self.ip or self.ipv6 or "0.0.0.0"), str(self.is_active)])
+        return " ".join([self.mac, (self.ip or self.ipv6 or "0.0.0.0"), self.name, str(self.is_active)])
 
     def __repr__(self):
         # print("__name__", self.__class__.__name__)

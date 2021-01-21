@@ -249,6 +249,7 @@ if __name__ == '__main__':
 
     add_var_callbacks(arpmon, myisy)
 
+    print("whoshere-isy arpmon.run")
     arpmon.run()
 
     arpmon.watch_threads()

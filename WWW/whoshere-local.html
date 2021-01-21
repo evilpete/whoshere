@@ -1,0 +1,286 @@
+<HTML>
+<HEAD>
+<TITLE>Mac Status</TITLE>
+<meta name="theme-color" content="#111111">
+<style>
+th { text-align: center; }
+td, th {
+    vertical-align: inherit;
+    padding: 3px 8px 3px 8px;
+    border: 1px solid #444444;
+}
+// table#tb_0 {
+//     margin-left:auto;
+//     margin-right:auto;
+// }
+table {
+    border-collapse: collapse;
+    vertical-align: inherit;
+    border-spacing: 0px;
+    border: 2px solid #444444;
+    align: center;
+}
+body {
+    background-color: black;
+    color: white;
+}
+// a:link, a:visited { color: #9999CC; }
+</style>
+</HEAD>
+
+<BODY OnLoad=do_all()>
+
+<script src="http://10.1.1.176:8088/whoshere-status.js"></script>
+
+<div class=report ID=report NAME=report>--Loading--</div>
+
+<SCRIPT LANGUAGE="JavaScript">
+
+    var report_obj = null;
+    var status_data = null;
+    var targ_data = null;
+
+    var next_load = 0;
+    var data_age = 0;
+
+    function do_all() {
+
+        status_data = jdata[0];
+        targ_data = jdata.slice(1,);
+
+        // console.log("do_all targ_data :" + targ_data.length  + targ_data);
+
+        var dtime = Date.now() / 1000;
+
+        // console.log('do_all');
+
+        if ( status_data.refresh_time ) {
+            // if less the 20 min old
+            data_age = dtime - status_data.time;
+
+            // console.log(data_age.toString() +  " < " + status_data.refresh_time.toString());
+            if ( data_age  < status_data.refresh_time ) {
+
+                next_load = status_data.refresh_time - data_age;
+
+                // shouldn't happen but check anyway
+                if ( next_load > 0) {
+                    setTimeout(function() {
+                        location.reload();
+                        }, (next_load + 30) * 1000);
+                        // console.log('reload in ' + next_load.toString() + " => " + ( dtime + status_data.refresh_time) );
+                }
+
+            }
+        }
+        do_report();
+    }
+
+    //
+    // Sorting Funtions
+    //
+
+    var sort_by = function(field, reverse, primer){
+        var key = primer ?
+            function(x) {return primer(x[field])} :
+            function(x) {return x[field]};
+
+        reverse = !reverse ? 1 : -1;
+
+        return function (a, b) {
+            return a = key(a), b = key(b), reverse * ((a > b) - (b > a));
+        }
+    }
+
+    function lc(s) { return s.toString().toLowerCase(); }
+
+    sort_mac_rev = true;
+    function sort_mac() {
+        targ_data.sort(sort_by('mac', sort_mac_rev, lc));
+        if (sort_mac_rev) { sort_mac_rev = false; } else { sort_mac_rev = true; }
+        do_report()
+    }
+
+    sort_stat_rev = true;
+    function sort_stat() {
+        targ_data.sort(sort_by('stat', sort_stat_rev, parseInt));
+        if (sort_stat_rev) { sort_stat_rev = false; } else { sort_stat_rev = true; }
+        do_report()
+    }
+
+    sort_name_rev = false;
+    function sort_name() {
+        // console.log('#sort_name ' + sort_name_rev);
+        targ_data.sort(sort_by('name', sort_name_rev, lc));
+        if (sort_name_rev) { sort_name_rev = false; } else { sort_name_rev = true; }
+        do_report()
+    }
+
+    sort_seen_rev = true;
+    function sort_seen() {
+        targ_data.sort(sort_by('last_seen', sort_seen_rev, parseInt));
+        if (sort_seen_rev) { sort_seen_rev = false; } else { sort_seen_rev = true; }
+        do_report()
+    }
+
+    sort_change_rev = true;
+    function sort_change() {
+        targ_data.sort(sort_by('last_change', sort_change_rev, parseInt));
+        if (sort_change_rev) { sort_change_rev = false; } else { sort_change_rev = true; }
+        do_report();
+    }
+
+
+    function fancyTimeFormat(time) {   
+        // Hours, minutes and seconds
+        var hrs = ~~(time / 3600);
+        var mins = ~~((time % 3600) / 60);
+        var secs = time % 60;
+
+        // Output like "1:01" or "4:03:59" or "123:03:59"
+        var ret = "";
+
+        if (hrs > 0) {
+            ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+        }
+
+        ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+        ret += "" + secs.toString().substr(-2);
+        return ret;
+    }
+
+
+
+    //
+    // Report Table Generation
+    //
+
+    function do_report() {
+
+        var dtime = Date.now() / 1000;
+
+        // var rtime = new  Date()
+        // rtime.setSeconds(rtime.getSeconds() + status_data.refresh_time);
+
+        data_age = dtime - status_data.time;
+
+        // console.log("do_report data_age:", Math.floor(data_age) + " : " + status_data.refresh_time);
+        // console.log(targ_data);
+
+        // console.log('do_report');
+
+        if ( ! report_obj ) {
+            report_obj = document.getElementById("report");
+        }
+
+        var head_title = "Start_Time : " + status_data.start_time_str + "\n"
+                   + "Prog : " + status_data.prog + "\n"
+                   + "Pid : " + status_data.pid + "\n"
+                   + "Item Count : " + status_data.len + "\n"
+                   + "Refresh : " + status_data.refresh_time + "\n"
+                   + "Refresh_Time : " + status_data.reload_time_str;
+
+
+        var date_color = "white";
+        if ( (dtime - status_data.time) > (status_data.refresh_time + 90) ) {
+            date_color = "orange";
+        }
+
+        // console.log('do_report : ' + dtime + " : " + (status_data.time +  status_data.refresh_time) );
+
+        var htmlrep = "<TABLE NAME='tb_0' ID='tb_0'>"
+                + "<TR><TH id=datestr style='color:" + date_color + ";' colspan='5' + title='" + head_title + "'>"
+                    + status_data.time_str + "</TH></TR>"
+                + "<TR title='Click Sort'>"
+                + "<TD OnClick='Javascript:sort_mac();'>MAC</TD>"
+                + "<TD OnClick='Javascript:sort_stat();'>&nbsp;</TD>"
+                + "<TD OnClick='Javascript:sort_name();'>Name</TD>"
+                + "<TD OnClick='Javascript:sort_seen();'>Last Seen</TD>"
+                + "<TD OnClick='Javascript:sort_change();'>Last Change</TD>"
+                + "</TR>";
+
+        var itemc = 0;
+
+        for (pp in targ_data) {
+
+            if ( targ_data[pp].name == "status" ) { continue; }
+
+            var scolor = "white";
+            var mcolor = "white";
+            var ncolor = "white";
+            var ccolor = "white";
+
+            if (targ_data[pp].stat == "1") {
+                mcolor = "#44FF44";
+            } else if (targ_data[pp].stat == "-1") {
+                mcolor = "gray";
+            }
+
+
+
+            var last_seen_str = targ_data[pp].last_seen_str
+            var last_seen_title = ""
+            if ( Number(targ_data[pp].last_seen) < 1200) {
+                last_seen_str = "&nbsp;";
+                ccolor = "gray";
+            } else {
+                var d_last_seen = fancyTimeFormat( (dtime - Number(targ_data[pp].last_seen)) )
+                last_seen_title = " title=" + d_last_seen
+            }
+
+            var d_last_change = fancyTimeFormat( (dtime - Number(targ_data[pp].last_change)) )
+
+            var last_change_title = ""
+            if ( Number(targ_data[pp].last_change) == 0) {
+                last_change_str = "&nbsp;";
+            } else {
+                var last_change_str = targ_data[pp].last_change_str;
+                last_change_title = " title=" + d_last_change
+            }
+
+            // if (targ_data[pp].stat == "1" && (dtime - Number(targ_data[pp].last_change)) < status_data.refresh_time) {
+            //     ncolor = "yellow";
+            // }
+
+            if ( (dtime - Number(targ_data[pp].last_change)) < status_data.refresh_time) {
+                if (targ_data[pp].stat == "0") {
+                    ccolor = "orange";
+                } else {
+                    ccolor = "yellow";
+                }
+            }
+
+            htmlrep += "<TR>"
+                    + "<TD id=mac" + itemc + " title='" + targ_data[pp].ip + "'>"
+                        + "<font color='" + mcolor + "'>"
+                        + targ_data[pp].mac
+                        + "</font></TD>"
+                    + "<TD id=stat" + itemc + ">"
+                        + targ_data[pp].stat
+                        + "</TD>"
+                    + "<TD id=name" + itemc + ">"
+                        + "<font color='" + ncolor + "'>"
+                        + targ_data[pp].name
+                        + "</font></TD>"
+                    + "<TD id=lseen" + itemc + last_seen_title + ">"
+                        + "<font color='" + scolor + "'>"
+                        + last_seen_str
+                        + "</font></TD>"
+                    + "<TD id=lchange" + itemc + last_change_title + ">"
+                        + "<font color='" + ccolor + "'>"
+                        + last_change_str
+                        + "</font></TD>"
+                + "</TR>";
+
+            itemc += 1;
+        }
+        htmlrep += "</TABLE>";
+
+        report_obj.innerHTML = htmlrep;
+    }
+
+</script>
+
+<P></P>
+</BODY>
+</HTML>

@@ -14,7 +14,7 @@ import ssl
 
 from distutils.core import setup
 
-version = '0.1.20201204'
+version = '0.1.20210102'
 
 setup(
     name='whoshere',
